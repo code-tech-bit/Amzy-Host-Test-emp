@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Keys - Amzy Host</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --font-display: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            /* Dark theme — refined indigo accent */
+            --bg-primary: #050508;
+            --bg-secondary: rgba(255,255,255,0.02);
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-glass: rgba(255,255,255,0.04);
+            --bg-input: rgba(255,255,255,0.04);
+            --bg-hover: rgba(255,255,255,0.06);
+
+            --text-primary: #f0f0f5;
+            --text-secondary: rgba(255,255,255,0.55);
+            --text-muted: rgba(255,255,255,0.35);
+            --text-dim: rgba(255,255,255,0.2);
+
+            --border-color: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.12);
+            --border-active: rgba(255,255,255,0.2);
+
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-glow: rgba(99,102,241,0.35);
+            --accent-glow-soft: rgba(99,102,241,0.1);
+
+            --error: #ef4444;
+            --error-soft: rgba(239,68,68,0.1);
+            --success: #10b981;
+            --success-soft: rgba(16,185,129,0.1);
+            --warning: #f59e0b;
+
+            --shadow-color: rgba(0,0,0,0.4);
+            --grid-color: rgba(255,255,255,0.015);
+            --scanline-color: rgba(255,255,255,0.012);
+
+            --code-bg: rgba(255,255,255,0.04);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(0,0,0,0.02);
+            --bg-card: rgba(255,255,255,0.7);
+            --bg-glass: rgba(255,255,255,0.6);
+            --bg-input: rgba(0,0,0,0.03);
+            --bg-hover: rgba(0,0,0,0.04);
+
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15,23,42,0.55);
+            --text-muted: rgba(15,23,42,0.35);
+            --text-dim: rgba(15,23,42,0.2);
+
+            --border-color: rgba(0,0,0,0.06);
+            --border-hover: rgba(0,0,0,0.12);
+            --border-active: rgba(0,0,0,0.2);
+
+            --accent: #4f46e5;
+            --accent-light: #6366f1;
+            --accent-glow: rgba(79,70,229,0.25);
+            --accent-glow-soft: rgba(79,70,229,0.08);
+
+            --shadow-color: rgba(0,0,0,0.08);
+            --grid-color: rgba(0,0,0,0.03);
+            --scanline-color: rgba(0,0,0,0.008);
+
+            --code-bg: rgba(0,0,0,0.05);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        /* ===== BACKGROUND EFFECTS ===== */
+        #network-canvas {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none;
+        }
+
+        .grid-overlay {
+            position: fixed; inset: 0; z-index: 1;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+        }
+
+        .scanlines {
+            position: fixed; inset: 0; z-index: 2;
+            background: linear-gradient(to bottom, transparent 50%, var(--scanline-color) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            animation: scanMove 10s linear infinite;
+        }
+
+        @keyframes scanMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        .vignette {
+            position: fixed; inset: 0; z-index: 3;
+            background: radial-gradient(ellipse at center, transparent 30%, var(--bg-primary) 90%);
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .noise {
+            position: fixed; inset: 0; z-index: 4;
+            opacity: 0.015; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ===== AMBIENT GLOWS ===== */
+        .ambient-glow {
+            position: fixed; width: 500px; height: 500px;
+            border-radius: 50%; filter: blur(120px);
+            opacity: 0.1; pointer-events: none; z-index: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .ambient-glow-1 {
+            background: var(--accent); top: -200px; right: -100px;
+            animation: floatGlow 8s ease-in-out infinite;
+        }
+
+        .ambient-glow-2 {
+            background: var(--accent-light); bottom: -300px; left: -100px;
+            animation: floatGlow 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes floatGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 32px; height: 68px;
+            background: rgba(var(--bg-primary), 0.7);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease, background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            border: 1.5px solid var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display);
+            font-size: 18px; font-weight: 900; color: var(--accent);
+            animation: logoPulse 3s ease-in-out infinite;
+            box-shadow: 0 0 12px var(--accent-glow-soft), inset 0 0 12px var(--accent-glow-soft);
+            transition: border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 12px var(--accent-glow-soft), inset 0 0 12px var(--accent-glow-soft); }
+            50% { box-shadow: 0 0 24px var(--accent-glow), inset 0 0 18px var(--accent-glow-soft); }
+        }
+
+        .brand-text {
+            font-family: var(--font-display);
+            font-size: 16px; font-weight: 700;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+
+        .nav-links { display: flex; gap: 6px; }
+
+        .nav-links a {
+            padding: 8px 18px; border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none; font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+
+        .nav-links a::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, var(--bg-hover), transparent);
+            border-radius: 8px; opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover::before, .nav-links a.active::before { opacity: 1; }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+
+        .nav-links a.active {
+            box-shadow: inset 0 1px 0 var(--border-hover), 0 0 20px var(--accent-glow-soft);
+        }
+
+        .nav-right { display: flex; align-items: center; gap: 14px; }
+
+        .coin-badge {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 14px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 12px; letter-spacing: 1px;
+            color: var(--text-primary); cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .coin-badge:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-glow-soft);
+        }
+
+        .theme-toggle-btn {
+            width: 36px; height: 36px; border-radius: 9px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            transform: rotate(15deg) scale(1.1);
+            border-color: var(--border-hover);
+        }
+
+        .user-menu { position: relative; }
+        .user-menu .avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer; transition: all 0.3s; object-fit: cover;
+        }
+        .user-menu .avatar:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow-soft);
+        }
+        .user-menu .dropdown {
+            position: absolute; top: 50px; right: 0;
+            width: 190px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 8px;
+            opacity: 0; pointer-events: none;
+            transform: translateY(-8px) scale(0.96);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+        }
+        .user-menu:hover .dropdown {
+            opacity: 1; pointer-events: all;
+            transform: translateY(0) scale(1);
+        }
+        .user-menu .dropdown a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none; font-size: 13px;
+            transition: all 0.2s;
+        }
+        .user-menu .dropdown a:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .user-menu .dropdown hr {
+            border: none; border-top: 1px solid var(--border-color);
+            margin: 6px 0;
+        }
+
+        /* ===== MAIN ===== */
+        .main-content {
+            position: relative; z-index: 10;
+            padding: 100px 32px 48px;
+            max-width: 900px; margin: 0 auto;
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 32px; flex-wrap: wrap; gap: 16px;
+        }
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 28px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+        .page-title::after {
+            content: ''; display: block;
+            width: 40px; height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin-top: 8px; opacity: 0.5;
+            animation: titleLine 3s ease-in-out infinite;
+        }
+        @keyframes titleLine {
+            0%, 100% { width: 40px; opacity: 0.5; }
+            50% { width: 80px; opacity: 0.2; }
+        }
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 14px; margin-top: 6px;
+            transition: color 0.5s ease;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 12px 20px; border-radius: 11px;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s;
+            border: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; position: relative; overflow: hidden;
+            font-family: var(--font-body); letter-spacing: 0.3px;
+        }
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow-soft);
+        }
+        .btn-primary:hover {
+            background: var(--accent-light);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--accent-glow);
+        }
+        .btn-secondary {
+            background: var(--bg-glass);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+        .btn-icon {
+            width: 36px; height: 36px; padding: 0;
+            border-radius: 9px;
+        }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 28px;
+            transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        .card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 18px;
+            padding: 1px;
+            background: linear-gradient(160deg, var(--border-hover) 0%, transparent 40%, transparent 60%, var(--accent-glow-soft) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none;
+        }
+        .card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 60px var(--shadow-color);
+        }
+        .card h3 {
+            font-family: var(--font-display);
+            font-size: 13px; letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            display: flex; align-items: center; gap: 10px;
+            transition: color 0.5s ease;
+        }
+        .card h3 i {
+            width: 32px; height: 32px; border-radius: 9px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow-soft);
+            transition: all 0.3s ease;
+        }
+        .card:hover h3 i {
+            background: var(--accent-glow-soft);
+            border-color: var(--accent);
+            box-shadow: 0 0 25px var(--accent-glow-soft);
+        }
+
+        /* ===== API KEY ROW ===== */
+        .key-list { display: flex; flex-direction: column; gap: 12px; }
+        .key-row {
+            display: flex; align-items: center; gap: 16px;
+            padding: 18px 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+            backdrop-filter: blur(5px);
+        }
+        .key-row::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, var(--bg-hover), transparent);
+            transition: left 0.5s;
+        }
+        .key-row:hover::before { left: 100%; }
+        .key-row:hover {
+            background: var(--bg-glass);
+            border-color: var(--border-hover);
+            transform: translateX(4px);
+            box-shadow: 0 8px 30px var(--shadow-color);
+        }
+        .key-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--accent);
+            flex-shrink: 0;
+            transition: all 0.3s;
+            box-shadow: 0 0 15px var(--accent-glow-soft);
+        }
+        .key-row:hover .key-icon {
+            background: var(--accent-glow-soft);
+            border-color: var(--accent);
+            transform: scale(1.1);
+            box-shadow: 0 0 25px var(--accent-glow-soft);
+        }
+        .key-info { flex: 1; min-width: 0; }
+        .key-name {
+            font-size: 14px; font-weight: 600; color: var(--text-primary);
+            margin-bottom: 4px;
+            transition: color 0.5s ease;
+        }
+        .key-value {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+            word-break: break-all;
+            transition: all 0.3s;
+        }
+        .key-value.visible {
+            color: var(--text-secondary);
+        }
+        .key-meta {
+            font-size: 11px; color: var(--text-dim);
+            margin-top: 6px;
+            display: flex; gap: 16px;
+        }
+        .key-meta span {
+            display: flex; align-items: center; gap: 4px;
+        }
+        .key-actions {
+            display: flex; gap: 6px;
+            flex-shrink: 0;
+        }
+        .key-action-btn {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s; font-size: 12px;
+        }
+        .key-action-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+        .key-action-btn.danger:hover {
+            background: var(--error-soft);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center; padding: 48px 20px;
+            color: var(--text-dim);
+        }
+        .empty-state i {
+            font-size: 40px; margin-bottom: 16px; display: block;
+            color: var(--accent);
+            animation: keyFloat 3s ease-in-out infinite;
+            text-shadow: 0 0 30px var(--accent-glow-soft);
+        }
+        @keyframes keyFloat {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(5deg); }
+        }
+        .empty-state p {
+            font-size: 15px; margin-bottom: 6px;
+            color: var(--text-muted);
+        }
+        .empty-state .sub {
+            font-size: 13px; color: var(--text-dim);
+        }
+
+        /* ===== API DOCS ===== */
+        .docs-block {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 20px;
+            margin-top: 16px;
+            transition: all 0.3s ease;
+        }
+        .docs-block:hover {
+            border-color: var(--border-hover);
+        }
+        .docs-row {
+            display: flex; gap: 8px; align-items: baseline;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .docs-row strong {
+            color: var(--text-muted);
+            font-weight: 500;
+            min-width: 120px;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.5s ease;
+        }
+        .docs-row code {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            background: var(--bg-glass);
+            padding: 4px 10px;
+            border-radius: 6px;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        .docs-row:hover code {
+            border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow-soft);
+        }
+        .endpoint-list {
+            margin-top: 16px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .endpoint-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 14px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            font-family: var(--font-mono);
+            font-size: 12px;
+        }
+        .endpoint-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+            transform: translateX(4px);
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+        .method-tag {
+            padding: 3px 8px; border-radius: 5px;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 1px;
+            min-width: 44px; text-align: center;
+        }
+        .method-get {
+            background: var(--accent-glow-soft);
+            border: 1px solid var(--accent-glow-soft);
+            color: var(--accent-light);
+        }
+        .method-post {
+            background: var(--success-soft);
+            border: 1px solid rgba(16,185,129,0.2);
+            color: var(--success);
+        }
+        .endpoint-path {
+            color: var(--text-secondary);
+            flex: 1;
+            transition: color 0.5s ease;
+        }
+        .endpoint-desc {
+            color: var(--text-dim);
+            font-size: 11px;
+            transition: color 0.5s ease;
+        }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 300;
+            padding: 14px 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary); font-size: 13px;
+            display: flex; align-items: center; gap: 10px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transform: translateY(100px); opacity: 0;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 10px 40px var(--shadow-color);
+        }
+        .toast.show {
+            transform: translateY(0); opacity: 1;
+        }
+        .toast i { font-size: 14px; color: var(--success); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+            .main-content { padding: 92px 20px 40px; }
+        }
+        @media (max-width: 640px) {
+            .navbar { padding: 0 16px; height: 60px; }
+            .coin-badge span { display: none; }
+            .page-header { flex-direction: column; align-items: flex-start; }
+            .key-row { flex-wrap: wrap; }
+            .key-actions { width: 100%; justify-content: flex-end; margin-top: 8px; }
+            .docs-row { flex-direction: column; gap: 4px; }
+            .docs-row strong { min-width: auto; }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <!-- Background Effects -->
+    <canvas id="network-canvas"></canvas>
+    <div class="grid-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="noise"></div>
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="dashboard.html" class="nav-brand">
+            <div class="logo-icon">A</div>
+            <span class="brand-text">Amzy Host</span>
+        </a>
+        <div class="nav-links">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="deploy.html"><i class="fas fa-rocket"></i> Deploy</a>
+            <a href="coins.html"><i class="fas fa-coins"></i> Store</a>
+            <a href="analytics.html"><i class="fas fa-chart-line"></i> Analytics</a>
+        </div>
+        <div class="nav-right">
+            <div class="coin-badge" onclick="window.location.href='coins.html'">
+                <i class="fas fa-coins"></i>
+                <span id="coin-balance">0</span>
+            </div>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="user-menu">
+                <img src="https://ui-avatars.com/api/?name=User&background=fff&color=000&size=128" alt="" id="user-avatar" class="avatar">
+                <div class="dropdown">
+                    <a href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+                    <a href="api-keys.html"><i class="fas fa-key"></i> API Keys</a>
+                    <hr>
+                    <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">API Keys</h1>
+                <p class="page-subtitle">Manage your API access keys</p>
+            </div>
+            <button class="btn btn-primary" onclick="generateKey()">
+                <i class="fas fa-plus"></i> Generate Key
+            </button>
+        </div>
+
+        <!-- Keys Card -->
+        <div class="card">
+            <div class="key-list" id="keys-list">
+                <div class="empty-state">
+                    <i class="fas fa-key"></i>
+                    <p>No API keys yet</p>
+                    <span class="sub">Generate a key to access the API</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Docs Card -->
+        <div class="card">
+            <h3><i class="fas fa-book"></i> API Documentation</h3>
+            <div class="docs-block">
+                <div class="docs-row">
+                    <strong>Base URL</strong>
+                    <code>https://api.amzyhost.com/v1</code>
+                </div>
+                <div class="docs-row">
+                    <strong>Auth Header</strong>
+                    <code>Authorization: Bearer YOUR_API_KEY</code>
+                </div>
+            </div>
+            <div class="endpoint-list">
+                <div class="endpoint-item">
+                    <span class="method-tag method-get">GET</span>
+                    <span class="endpoint-path">/bots</span>
+                    <span class="endpoint-desc">List your bots</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method-tag method-post">POST</span>
+                    <span class="endpoint-path">/bots/deploy</span>
+                    <span class="endpoint-desc">Deploy a new bot</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method-tag method-post">POST</span>
+                    <span class="endpoint-path">/bots/:id/stop</span>
+                    <span class="endpoint-desc">Stop a bot</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method-tag method-post">POST</span>
+                    <span class="endpoint-path">/bots/:id/start</span>
+                    <span class="endpoint-desc">Start a bot</span>
+                </div>
+                <div class="endpoint-item">
+                    <span class="method-tag method-get">GET</span>
+                    <span class="endpoint-path">/analytics</span>
+                    <span class="endpoint-desc">Get analytics data</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toast-msg">Copied to clipboard</span>
+    </div>
+
+<script>
+    // ===== THEME SYSTEM =====
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('amzy-theme');
+        const savedMode = localStorage.getItem('amzy-theme-mode') || 'manual';
+
+        if (savedMode === 'system') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        } else if (savedTheme) {
+            html.setAttribute('data-theme', savedTheme);
+        } else {
+            html.setAttribute('data-theme', 'dark');
+        }
+        updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        themeIcon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    function toggleTheme() {
+        const current = html.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('amzy-theme', next);
+        localStorage.setItem('amzy-theme-mode', 'manual');
+        updateThemeIcon();
+    }
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (localStorage.getItem('amzy-theme-mode') === 'system') {
+            html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+    });
+
+    initTheme();
+
+    // ===== PARTICLE NETWORK =====
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: null, y: null };
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.4;
+            this.vy = (Math.random() - 0.5) * 0.4;
+            this.size = Math.random() * 1.5 + 0.5;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+            if (mouse.x != null) {
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    const force = (120 - dist) / 120;
+                    this.vx -= (dx / dist) * force * 0.3;
+                    this.vy -= (dy / dist) * force * 0.3;
+                }
+            }
+        }
+
+        draw() {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = isDark 
+                ? `rgba(99, 102, 241, ${this.size * 0.2})`
+                : `rgba(79, 70, 229, ${this.size * 0.15})`;
+            ctx.fill();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 20000));
+        for (let i = 0; i < count; i++) particles.push(new Particle());
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const isDark = html.getAttribute('data-theme') === 'dark';
+
+        particles.forEach(p => { p.update(); p.draw(); });
+
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = isDark
+                        ? `rgba(99, 102, 241, ${0.06 * (1 - dist / 100)})`
+                        : `rgba(79, 70, 229, ${0.04 * (1 - dist / 100)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateParticles);
+    }
+
+    resizeCanvas();
+    initParticles();
+    animateParticles();
+
+    window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+    // ===== API KEYS =====
+    let keys = JSON.parse(localStorage.getItem('amzy-api-keys') || '[]');
+
+    function renderKeys() {
+        const container = document.getElementById('keys-list');
+
+        if (keys.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-key"></i>
+                    <p>No API keys yet</p>
+                    <span class="sub">Generate a key to access the API</span>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = keys.map((key, i) => `
+            <div class="key-row">
+                <div class="key-icon"><i class="fas fa-key"></i></div>
+                <div class="key-info">
+                    <div class="key-name">${key.name}</div>
+                    <div class="key-value ${key.visible ? 'visible' : ''}" id="key-${i}">
+                        ${key.visible ? key.key : '•'.repeat(Math.min(key.key.length, 32))}
+                    </div>
+                    <div class="key-meta">
+                        <span><i class="fas fa-calendar-alt"></i> ${new Date(key.createdAt).toLocaleDateString()}</span>
+                        <span><i class="fas fa-clock"></i> ${key.lastUsed ? new Date(key.lastUsed).toLocaleDateString() : 'Never used'}</span>
+                    </div>
+                </div>
+                <div class="key-actions">
+                    <button class="key-action-btn" onclick="toggleKeyVisibility(${i})" title="${key.visible ? 'Hide' : 'Show'}">
+                        <i class="fas fa-${key.visible ? 'eye-slash' : 'eye'}"></i>
+                    </button>
+                    <button class="key-action-btn" onclick="copyKey('${key.key}')" title="Copy">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                    <button class="key-action-btn danger" onclick="deleteKey(${i})" title="Delete">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function generateKey() {
+        const newKey = {
+            name: 'API Key ' + (keys.length + 1),
+            key: 'amzy_' + Array.from(crypto.getRandomValues(new Uint8Array(32))).map(b => b.toString(16).padStart(2, '0')).join(''),
+            visible: true,
+            createdAt: new Date().toISOString(),
+            lastUsed: null
+        };
+
+        keys.push(newKey);
+        localStorage.setItem('amzy-api-keys', JSON.stringify(keys));
+        renderKeys();
+        showToast('API key generated successfully');
+    }
+
+    function toggleKeyVisibility(index) {
+        keys[index].visible = !keys[index].visible;
+        localStorage.setItem('amzy-api-keys', JSON.stringify(keys));
+        renderKeys();
+    }
+
+    function copyKey(key) {
+        navigator.clipboard.writeText(key).then(() => {
+            showToast('Key copied to clipboard');
+        });
+    }
+
+    function deleteKey(index) {
+        if (!confirm('Delete this API key? This action cannot be undone.')) return;
+        keys.splice(index, 1);
+        localStorage.setItem('amzy-api-keys', JSON.stringify(keys));
+        renderKeys();
+        showToast('API key deleted');
+    }
+
+    // ===== TOAST =====
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toast-msg').textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // ===== COINS =====
+    function updateCoins() {
+        const c = parseInt(localStorage.getItem('amzy-coins') || '0');
+        document.getElementById('coin-balance').textContent = c;
+    }
+
+    // ===== LOGOUT =====
+    function logout() {
+        localStorage.removeItem('amzy-token');
+        localStorage.removeItem('amzy-user');
+        window.location.href = 'login.html';
+    }
+
+    // ===== AUTH =====
+    if (!localStorage.getItem('amzy-token')) window.location.href = 'login.html';
+
+    renderKeys();
+    updateCoins();
+
+    // ===== NAVBAR SCROLL =====
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const nav = document.querySelector('.navbar');
+        const y = window.scrollY;
+        if (y > lastScroll && y > 80) nav.style.transform = 'translateY(-100%)';
+        else nav.style.transform = 'translateY(0)';
+        lastScroll = y;
+    });
+</script>
+
+</body>
+</html>

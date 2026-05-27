@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy Bot — Amzy Host</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --font-display: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            --bg-primary: #050508;
+            --bg-secondary: rgba(255,255,255,0.02);
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-glass: rgba(255,255,255,0.04);
+            --bg-input: rgba(255,255,255,0.04);
+            --bg-hover: rgba(255,255,255,0.06);
+
+            --text-primary: #f0f0f5;
+            --text-secondary: rgba(255,255,255,0.55);
+            --text-muted: rgba(255,255,255,0.35);
+            --text-dim: rgba(255,255,255,0.2);
+
+            --border-color: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.12);
+            --border-active: rgba(255,255,255,0.2);
+
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-glow: rgba(99,102,241,0.35);
+            --accent-glow-soft: rgba(99,102,241,0.1);
+
+            --error: #ef4444;
+            --error-soft: rgba(239,68,68,0.1);
+            --success: #10b981;
+            --success-soft: rgba(16,185,129,0.1);
+            --warning: #f59e0b;
+
+            --shadow-color: rgba(0,0,0,0.4);
+            --grid-color: rgba(255,255,255,0.015);
+            --scanline-color: rgba(255,255,255,0.012);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(0,0,0,0.02);
+            --bg-card: rgba(255,255,255,0.7);
+            --bg-glass: rgba(255,255,255,0.6);
+            --bg-input: rgba(0,0,0,0.03);
+            --bg-hover: rgba(0,0,0,0.04);
+
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15,23,42,0.55);
+            --text-muted: rgba(15,23,42,0.35);
+            --text-dim: rgba(15,23,42,0.2);
+
+            --border-color: rgba(0,0,0,0.06);
+            --border-hover: rgba(0,0,0,0.12);
+            --border-active: rgba(0,0,0,0.2);
+
+            --accent: #4f46e5;
+            --accent-light: #6366f1;
+            --accent-glow: rgba(79,70,229,0.25);
+            --accent-glow-soft: rgba(79,70,229,0.08);
+
+            --shadow-color: rgba(0,0,0,0.08);
+            --grid-color: rgba(0,0,0,0.03);
+            --scanline-color: rgba(0,0,0,0.008);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        /* ===== BACKGROUND EFFECTS ===== */
+        #network-canvas {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none;
+        }
+
+        .grid-overlay {
+            position: fixed; inset: 0; z-index: 1;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+        }
+
+        .scanlines {
+            position: fixed; inset: 0; z-index: 2;
+            background: linear-gradient(to bottom, transparent 50%, var(--scanline-color) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            animation: scanMove 10s linear infinite;
+        }
+
+        @keyframes scanMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        .vignette {
+            position: fixed; inset: 0; z-index: 3;
+            background: radial-gradient(ellipse at center, transparent 30%, var(--bg-primary) 90%);
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .noise {
+            position: fixed; inset: 0; z-index: 4;
+            opacity: 0.015; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ===== AMBIENT GLOWS ===== */
+        .ambient-glow {
+            position: fixed; width: 500px; height: 500px;
+            border-radius: 50%; filter: blur(120px);
+            opacity: 0.1; pointer-events: none; z-index: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .ambient-glow-1 {
+            background: var(--accent); top: -200px; right: -100px;
+            animation: floatGlow 8s ease-in-out infinite;
+        }
+
+        .ambient-glow-2 {
+            background: var(--accent-light); bottom: -300px; left: -100px;
+            animation: floatGlow 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes floatGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* ===== NAVBAR ===== */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 32px; height: 68px;
+            background: rgba(var(--bg-primary), 0.7);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease, background 0.5s ease, border-color 0.5s ease;
+        }
+
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            border: 1.5px solid var(--accent);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display);
+            font-size: 18px; font-weight: 900; color: var(--accent);
+            animation: logoPulse 3s ease-in-out infinite;
+            box-shadow: 0 0 12px var(--accent-glow-soft), inset 0 0 12px var(--accent-glow-soft);
+            transition: border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 12px var(--accent-glow-soft), inset 0 0 12px var(--accent-glow-soft); }
+            50% { box-shadow: 0 0 24px var(--accent-glow), inset 0 0 18px var(--accent-glow-soft); }
+        }
+
+        .brand-text {
+            font-family: var(--font-display);
+            font-size: 16px; font-weight: 700;
+            letter-spacing: 3px; text-transform: uppercase;
+            color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+
+        .nav-links { display: flex; gap: 6px; }
+
+        .nav-links a {
+            padding: 8px 18px; border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none; font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+
+        .nav-links a::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, var(--bg-hover), transparent);
+            border-radius: 8px; opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover::before, .nav-links a.active::before { opacity: 1; }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: var(--text-primary);
+            background: var(--bg-secondary);
+        }
+
+        .nav-links a.active {
+            box-shadow: inset 0 1px 0 var(--border-hover), 0 0 20px var(--accent-glow-soft);
+        }
+
+        .nav-right { display: flex; align-items: center; gap: 14px; }
+
+        .coin-badge {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 14px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 12px; letter-spacing: 1px;
+            color: var(--text-primary); cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .coin-badge:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--shadow-color);
+        }
+
+        .theme-toggle-btn {
+            width: 36px; height: 36px; border-radius: 9px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            transform: rotate(15deg) scale(1.1);
+            border-color: var(--border-hover);
+        }
+
+        .user-menu { position: relative; }
+        .user-menu .avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer; transition: all 0.3s ease; object-fit: cover;
+        }
+        .user-menu .avatar:hover {
+            border-color: var(--text-muted);
+            box-shadow: 0 0 20px var(--accent-glow-soft);
+        }
+        .user-menu .dropdown {
+            position: absolute; top: 50px; right: 0;
+            width: 190px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 8px;
+            opacity: 0; pointer-events: none;
+            transform: translateY(-8px) scale(0.96);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(24px);
+            z-index: 200;
+        }
+        .user-menu:hover .dropdown {
+            opacity: 1; pointer-events: all;
+            transform: translateY(0) scale(1);
+        }
+        .user-menu .dropdown a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none; font-size: 13px;
+            transition: all 0.2s ease;
+        }
+        .user-menu .dropdown a:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .user-menu .dropdown hr {
+            border: none; border-top: 1px solid var(--border-color);
+            margin: 6px 0;
+        }
+
+        /* ===== MAIN ===== */
+        .main-content {
+            position: relative; z-index: 10;
+            padding: 100px 32px 48px;
+            max-width: 720px; margin: 0 auto;
+        }
+
+        /* ===== PAGE HEADER ===== */
+        .page-header {
+            margin-bottom: 36px;
+            text-align: center;
+        }
+
+        .page-icon {
+            width: 64px; height: 64px; border-radius: 18px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 24px; color: var(--accent);
+            animation: iconPulse 3s ease-in-out infinite;
+            box-shadow: 0 0 30px var(--accent-glow-soft);
+            transition: all 0.5s ease;
+        }
+
+        @keyframes iconPulse {
+            0%, 100% { box-shadow: 0 0 30px var(--accent-glow-soft); transform: scale(1); }
+            50% { box-shadow: 0 0 50px var(--accent-glow); transform: scale(1.02); }
+        }
+
+        .page-title {
+            font-family: var(--font-display);
+            font-size: 28px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            position: relative; display: inline-block;
+            transition: color 0.5s ease;
+        }
+
+        .page-title::after {
+            content: ''; position: absolute; bottom: -4px; left: 50%;
+            transform: translateX(-50%);
+            width: 40px; height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            animation: titleLine 3s ease-in-out infinite;
+        }
+
+        @keyframes titleLine {
+            0%, 100% { width: 40px; opacity: 0.6; }
+            50% { width: 100px; opacity: 0.3; }
+        }
+
+        .page-subtitle {
+            font-size: 15px; color: var(--text-muted);
+            letter-spacing: 0.5px;
+            transition: color 0.5s ease;
+        }
+
+        /* ===== PROGRESS ===== */
+        .progress-wrap {
+            display: flex; align-items: center; justify-content: center;
+            gap: 0; margin-bottom: 40px; padding: 0 20px;
+        }
+        .progress-step {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: var(--bg-input);
+            border: 1.5px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display);
+            font-size: 14px; font-weight: 700;
+            color: var(--text-dim);
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative; flex-shrink: 0;
+        }
+        .progress-step.active {
+            background: var(--accent); border-color: var(--accent); color: #fff;
+            box-shadow: 0 0 30px var(--accent-glow), 0 0 60px var(--accent-glow-soft);
+            transform: scale(1.15);
+        }
+        .progress-step.completed {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .progress-step.completed .step-num { display: none; }
+        .progress-step.completed .step-check { display: block; font-size: 14px; }
+        .progress-step .step-check { display: none; }
+        .progress-line {
+            flex: 1; height: 1.5px;
+            background: var(--bg-hover);
+            position: relative; overflow: hidden;
+            max-width: 80px; margin: 0 8px;
+        }
+        .progress-line-fill {
+            position: absolute; left: 0; top: 0;
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 0 10px var(--accent-glow-soft);
+        }
+        .progress-line-fill.done { width: 100%; }
+        .step-label {
+            position: absolute; top: 52px; left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px; letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+        .progress-step.active .step-label { color: var(--text-secondary); }
+        .progress-step.completed .step-label { color: var(--text-muted); }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+
+        .card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 20px;
+            padding: 1px;
+            background: linear-gradient(160deg, var(--border-hover) 0%, transparent 40%, transparent 60%, var(--accent-glow-soft) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .card:hover {
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 60px var(--shadow-color);
+        }
+
+        .card-header {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 28px;
+        }
+        .card-header i {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; color: var(--accent);
+            transition: all 0.3s ease;
+        }
+        .card-header h2 {
+            font-family: var(--font-display);
+            font-size: 15px; letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+        }
+
+        /* ===== FORM ===== */
+        .form-group { margin-bottom: 24px; }
+        .form-group label {
+            display: block; font-size: 11px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-muted); margin-bottom: 10px;
+        }
+        .input-wrap { position: relative; }
+        .input-wrap input,
+        .input-wrap textarea {
+            width: 100%; padding: 14px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary); font-size: 14px;
+            font-family: var(--font-body);
+            outline: none; transition: all 0.3s ease;
+        }
+        .input-wrap input:focus,
+        .input-wrap textarea:focus {
+            border-color: var(--accent);
+            background: var(--bg-hover);
+            box-shadow: 0 0 0 3px var(--accent-glow-soft), 0 0 30px var(--accent-glow-soft);
+        }
+        .input-wrap input::placeholder,
+        .input-wrap textarea::placeholder {
+            color: var(--text-dim);
+        }
+        .input-wrap .input-icon {
+            position: absolute; right: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 14px; transition: all 0.3s ease;
+        }
+        .input-wrap input:focus ~ .input-icon {
+            color: var(--accent);
+        }
+        .help-text {
+            display: block; margin-top: 8px;
+            font-size: 11px; color: var(--text-dim);
+            letter-spacing: 0.5px;
+        }
+        .help-text a {
+            color: var(--accent-light);
+            text-decoration: none; border-bottom: 1px solid var(--accent-glow-soft);
+            transition: all 0.2s ease;
+        }
+        .help-text a:hover {
+            color: var(--accent); border-bottom-color: var(--accent);
+        }
+
+        .subdomain-wrap input { padding-right: 130px; }
+        .subdomain-suffix {
+            position: absolute; right: 16px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-dim);
+            font-size: 14px;
+            font-family: var(--font-mono);
+            pointer-events: none;
+        }
+        .subdomain-icon { right: 130px !important; }
+
+        /* ===== LANGUAGE SELECT ===== */
+        .lang-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+        }
+        .lang-card {
+            padding: 20px;
+            background: var(--bg-secondary);
+            border: 1.5px solid var(--border-color);
+            border-radius: 14px;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; gap: 14px;
+            position: relative; overflow: hidden;
+        }
+        .lang-card::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, var(--accent-glow-soft), transparent);
+            transition: left 0.6s ease;
+        }
+        .lang-card:hover::before { left: 100%; }
+        .lang-card:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--shadow-color);
+        }
+        .lang-card.active {
+            background: var(--accent-glow-soft);
+            border-color: var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow-soft), inset 0 1px 0 var(--border-hover);
+        }
+        .lang-card.active .lang-check {
+            opacity: 1; transform: scale(1);
+        }
+        .lang-icon-wrap {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        .lang-card:hover .lang-icon-wrap {
+            transform: scale(1.1);
+            border-color: var(--border-hover);
+        }
+        .lang-card.active .lang-icon-wrap {
+            background: var(--accent-glow-soft);
+            border-color: var(--accent);
+        }
+        .lang-info strong {
+            display: block; font-size: 14px; color: var(--text-primary);
+            margin-bottom: 3px;
+        }
+        .lang-info span {
+            font-size: 12px; color: var(--text-muted);
+        }
+        .lang-check {
+            position: absolute; top: 12px; right: 12px;
+            width: 20px; height: 20px; border-radius: 50%;
+            background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 10px; opacity: 0; transform: scale(0);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* ===== UPLOAD ===== */
+        .upload-zone {
+            padding: 48px 32px;
+            background: var(--bg-secondary);
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            text-align: center; cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .upload-zone::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle at center, var(--accent-glow-soft) 0%, transparent 70%);
+            opacity: 0; transition: opacity 0.4s ease;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent);
+            background: var(--bg-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px var(--shadow-color);
+        }
+        .upload-zone:hover::before, .upload-zone.dragover::before { opacity: 1; }
+        .upload-zone i {
+            font-size: 42px; color: var(--text-dim);
+            margin-bottom: 16px; display: block;
+            transition: all 0.4s ease;
+        }
+        .upload-zone:hover i {
+            color: var(--accent);
+            transform: scale(1.1) translateY(-4px);
+        }
+        .upload-zone p {
+            color: var(--text-muted);
+            font-size: 14px; margin-bottom: 6px;
+        }
+        .upload-zone p.small {
+            color: var(--text-dim);
+            font-size: 12px; margin-bottom: 0;
+        }
+
+        .html-upload-hero { padding: 64px 32px; }
+        .html-upload-hero i { font-size: 56px; }
+        .html-upload-hero p { font-size: 16px; font-weight: 500; }
+        .html-upload-hero p.small { font-size: 13px; }
+
+        .file-list { margin-top: 16px; }
+        .file-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px; margin-bottom: 8px;
+            transition: all 0.3s ease;
+            animation: fileSlide 0.3s ease;
+        }
+        @keyframes fileSlide {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .file-item:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+        }
+        .file-item i { font-size: 16px; color: var(--accent); margin: 0; }
+        .file-item .file-name {
+            flex: 1; font-size: 13px;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+        .file-item .file-size {
+            font-size: 11px; color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+        .file-item .file-remove {
+            width: 26px; height: 26px; border-radius: 7px;
+            background: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            color: var(--text-dim);
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            transition: all 0.2s ease; font-size: 10px;
+        }
+        .file-item .file-remove:hover {
+            background: var(--error-soft);
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 13px 22px; border-radius: 11px;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease;
+            border: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; position: relative; overflow: hidden;
+            font-family: var(--font-body); letter-spacing: 0.3px;
+        }
+        .btn-primary {
+            background: var(--accent); color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow-soft);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px var(--accent-glow), 0 0 0 1px var(--accent-glow-soft);
+            background: var(--accent-light);
+        }
+        .btn-primary:disabled {
+            opacity: 0.4; cursor: not-allowed; transform: none;
+            box-shadow: none;
+        }
+        .btn-secondary {
+            background: var(--bg-glass);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+        .btn-block { width: 100%; }
+        .btn-group { display: flex; gap: 12px; margin-top: 8px; }
+        .btn-group .btn { flex: 1; }
+
+        /* ===== REVIEW ===== */
+        .review-list {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 8px;
+            margin-bottom: 24px;
+        }
+        .review-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+        .review-item:hover { background: var(--bg-hover); }
+        .review-item:not(:last-child) {
+            border-bottom: 1px solid var(--border-color);
+        }
+        .review-item .review-label {
+            font-size: 13px; color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+        .review-item .review-value {
+            font-size: 13px; color: var(--text-primary); font-weight: 500;
+            font-family: var(--font-mono);
+        }
+        .review-item.highlight {
+            background: var(--accent-glow-soft);
+            margin: 4px 0; border-bottom: none;
+            border: 1px solid var(--accent-glow-soft);
+        }
+        .review-item.highlight .review-label { color: var(--accent); }
+        .review-item.highlight .review-value {
+            display: flex; align-items: center; gap: 6px;
+            font-family: var(--font-display);
+            font-size: 16px; font-weight: 700;
+            color: var(--accent);
+        }
+        .review-item.highlight .review-value i {
+            font-size: 12px; opacity: 0.8;
+            color: var(--accent);
+        }
+
+        /* ===== ALERT ===== */
+        .alert {
+            padding: 12px 16px; border-radius: 10px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px; margin-bottom: 20px;
+            animation: alertSlide 0.3s ease;
+        }
+        @keyframes alertSlide {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .alert-error {
+            background: var(--error-soft);
+            border: 1px solid rgba(239,68,68,0.2);
+            color: var(--error);
+        }
+        .alert.hidden { display: none !important; }
+
+        /* ===== SUCCESS ===== */
+        .success-wrap {
+            text-align: center; padding: 48px 32px;
+        }
+        .success-ring {
+            width: 80px; height: 80px; border-radius: 50%;
+            border: 2px solid var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 24px;
+            position: relative;
+            box-shadow: 0 0 30px var(--accent-glow-soft);
+        }
+        .success-ring::before {
+            content: ''; position: absolute; inset: -4px;
+            border-radius: 50%;
+            border: 1px solid var(--accent-glow-soft);
+            animation: ringPulse 2s ease-in-out infinite;
+        }
+        @keyframes ringPulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 1; }
+        }
+        .success-ring i {
+            font-size: 28px; color: var(--accent);
+            animation: checkPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+        }
+        @keyframes checkPop {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .success-title {
+            font-family: var(--font-display);
+            font-size: 20px; letter-spacing: 2px;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .success-text {
+            color: var(--text-muted);
+            font-size: 14px; margin-bottom: 32px;
+        }
+
+        /* ===== DEPLOY STEPS ===== */
+        .deploy-step {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .deploy-step.hidden {
+            display: none; opacity: 0;
+        }
+
+        /* ===== SPINNER ===== */
+        .spinner {
+            display: inline-block;
+            width: 16px; height: 16px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== TERMINAL OUTPUT ===== */
+        .terminal {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 16px;
+            font-family: var(--font-mono);
+            font-size: 12px; line-height: 1.8;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            max-height: 160px; overflow-y: auto;
+        }
+        .terminal-line {
+            opacity: 0;
+            animation: termLine 0.3s ease forwards;
+        }
+        @keyframes termLine {
+            to { opacity: 1; }
+        }
+        .terminal-line .term-time {
+            color: var(--text-dim); margin-right: 8px;
+        }
+        .terminal-line .term-ok { color: var(--success); }
+        .terminal-line .term-info { color: var(--text-muted); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+            .main-content { padding: 92px 20px 40px; }
+            .lang-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .navbar { padding: 0 16px; height: 60px; }
+            .coin-badge span { display: none; }
+            .progress-step { width: 38px; height: 38px; font-size: 12px; }
+            .step-label { display: none; }
+            .card { padding: 24px; }
+            .page-title { font-size: 22px; }
+            .lang-grid { grid-template-columns: 1fr; }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+
+        /* ===== SHAKE ===== */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            15% { transform: translateX(-6px); }
+            30% { transform: translateX(6px); }
+            45% { transform: translateX(-4px); }
+            60% { transform: translateX(4px); }
+            75% { transform: translateX(-2px); }
+            90% { transform: translateX(2px); }
+        }
+        .shake { animation: shake 0.5s ease; }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <!-- Background Effects -->
+    <canvas id="network-canvas"></canvas>
+    <div class="grid-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="noise"></div>
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="dashboard.html" class="nav-brand">
+            <div class="logo-icon">A</div>
+            <span class="brand-text">Amzy Host</span>
+        </a>
+        <div class="nav-links">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="deploy.html" class="active"><i class="fas fa-rocket"></i> Deploy</a>
+            <a href="coins.html"><i class="fas fa-coins"></i> Store</a>
+            <a href="analytics.html"><i class="fas fa-chart-line"></i> Analytics</a>
+        </div>
+        <div class="nav-right">
+            <div class="coin-badge" onclick="window.location.href='coins.html'">
+                <i class="fas fa-coins"></i>
+                <span id="coin-balance">0</span>
+            </div>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="user-menu">
+                <img src="https://ui-avatars.com/api/?name=User&background=fff&color=000&size=128" alt="" id="user-avatar" class="avatar">
+                <div class="dropdown">
+                    <a href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+                    <a href="api-keys.html"><i class="fas fa-key"></i> API Keys</a>
+                    <hr>
+                    <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <div class="page-icon">
+                <i class="fas fa-rocket"></i>
+            </div>
+            <h1 class="page-title">Deploy</h1>
+            <p class="page-subtitle">Configure and launch your project</p>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-wrap">
+            <div class="progress-step active" id="step-1-indicator">
+                <span class="step-num">1</span>
+                <i class="fas fa-check step-check"></i>
+                <span class="step-label">Config</span>
+            </div>
+            <div class="progress-line" id="line-1"><div class="progress-line-fill"></div></div>
+            <div class="progress-step" id="step-2-indicator">
+                <span class="step-num">2</span>
+                <i class="fas fa-check step-check"></i>
+                <span class="step-label">Upload</span>
+            </div>
+            <div class="progress-line" id="line-2"><div class="progress-line-fill"></div></div>
+            <div class="progress-step" id="step-3-indicator">
+                <span class="step-num">3</span>
+                <i class="fas fa-check step-check"></i>
+                <span class="step-label">Deploy</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Configuration -->
+        <div class="deploy-step" id="step-1">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-sliders-h"></i>
+                    <h2>Configuration</h2>
+                </div>
+
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <div class="input-wrap">
+                        <input type="text" id="bot-name" placeholder="my-awesome-project" required>
+                        <i class="fas fa-cube input-icon"></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Runtime</label>
+                    <div class="lang-grid">
+                        <div class="lang-card active" onclick="selectLang('nodejs', this)">
+                            <div class="lang-check"><i class="fas fa-check"></i></div>
+                            <div class="lang-icon-wrap">⚡</div>
+                            <div class="lang-info">
+                                <strong>Node.js</strong>
+                                <span>v20 LTS · 5 coins</span>
+                            </div>
+                        </div>
+                        <div class="lang-card" onclick="selectLang('python', this)">
+                            <div class="lang-check"><i class="fas fa-check"></i></div>
+                            <div class="lang-icon-wrap">🐍</div>
+                            <div class="lang-info">
+                                <strong>Python</strong>
+                                <span>v3.11 · 10 coins</span>
+                            </div>
+                        </div>
+                        <div class="lang-card" onclick="selectLang('html', this)">
+                            <div class="lang-check"><i class="fas fa-check"></i></div>
+                            <div class="lang-icon-wrap">🌐</div>
+                            <div class="lang-info">
+                                <strong>HTML</strong>
+                                <span>Static · 20 coins</span>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="bot-language" value="nodejs">
+                </div>
+
+                <div class="form-group" id="token-group">
+                    <label>Telegram Bot Token</label>
+                    <div class="input-wrap">
+                        <input type="password" id="bot-token" placeholder="123456789:ABCdefGHIjklMNOpqrsTUVwxyz">
+                        <i class="fas fa-key input-icon"></i>
+                    </div>
+                    <small class="help-text">Get your token from <a href="https://t.me/BotFather" target="_blank">@BotFather</a> on Telegram</small>
+                </div>
+
+                <div class="form-group hidden" id="subdomain-group">
+                    <label>Subdomain</label>
+                    <div class="input-wrap subdomain-wrap">
+                        <input type="text" id="subdomain" placeholder="my-project">
+                        <span class="subdomain-suffix">.amzyhost.com</span>
+                        <i class="fas fa-globe input-icon subdomain-icon"></i>
+                    </div>
+                    <small class="help-text">Choose a unique subdomain for your website</small>
+                </div>
+
+                <div class="form-group hidden" id="html-upload-group">
+                    <div class="upload-zone html-upload-hero" id="html-upload-zone"
+                         ondrop="dropHandler(event)"
+                         ondragover="dragOverHandler(event)"
+                         ondragleave="dragLeaveHandler(event)"
+                         onclick="document.getElementById('html-file-input').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Drop your website files here</p>
+                        <p class="small">index.html, style.css, script.js, images...</p>
+                        <input type="file" id="html-file-input" multiple onchange="handleFiles(this.files, 'html-file-list')" hidden>
+                    </div>
+                    <div class="file-list" id="html-file-list"></div>
+                </div>
+
+                <button class="btn btn-primary btn-block" onclick="nextStep(2)">
+                    Continue <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Upload -->
+        <div class="deploy-step hidden" id="step-2">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h2>Upload Files</h2>
+                </div>
+
+                <div class="upload-zone" id="upload-zone"
+                     ondrop="dropHandler(event)"
+                     ondragover="dragOverHandler(event)"
+                     ondragleave="dragLeaveHandler(event)"
+                     onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drop your files here or click to browse</p>
+                    <p class="small" id="upload-types">Supports .js, .py, .json, .env, .txt</p>
+                    <input type="file" id="file-input" multiple onchange="handleFiles(this.files)" hidden>
+                </div>
+                <div class="file-list" id="file-list"></div>
+
+                <div class="form-group">
+                    <label>Environment Variables</label>
+                    <div class="input-wrap">
+                        <textarea id="env-vars" rows="4" placeholder="DATABASE_URL=postgres://...&#10;API_KEY=sk-...&#10;DEBUG=false"></textarea>
+                    </div>
+                    <small class="help-text">One KEY=value per line. Stored encrypted.</small>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="prevStep(1)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn btn-primary" onclick="nextStep(3)">
+                        Review <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Review & Deploy -->
+        <div class="deploy-step hidden" id="step-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-clipboard-check"></i>
+                    <h2>Review</h2>
+                </div>
+
+                <div class="review-list">
+                    <div class="review-item">
+                        <span class="review-label">Project Name</span>
+                        <span class="review-value" id="review-name">-</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Type</span>
+                        <span class="review-value" id="review-type">-</span>
+                    </div>
+                    <div class="review-item" id="review-lang-wrap">
+                        <span class="review-label">Runtime</span>
+                        <span class="review-value" id="review-lang">-</span>
+                    </div>
+                    <div class="review-item hidden" id="review-subdomain-wrap">
+                        <span class="review-label">Subdomain</span>
+                        <span class="review-value" id="review-subdomain">-</span>
+                    </div>
+                    <div class="review-item">
+                        <span class="review-label">Files</span>
+                        <span class="review-value" id="review-files">0 files</span>
+                    </div>
+                    <div class="review-item highlight">
+                        <span class="review-label">Cost</span>
+                        <span class="review-value">
+                            <i class="fas fa-coins"></i>
+                            <span id="deploy-cost">5</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="alert alert-error hidden" id="deploy-error">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="error-msg"></span>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-secondary" onclick="prevStep(2)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn btn-primary" onclick="deployBot()" id="deploy-btn">
+                        <i class="fas fa-rocket"></i> Deploy
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Deploying -->
+        <div class="deploy-step hidden" id="step-4">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-terminal"></i>
+                    <h2>Deploying</h2>
+                </div>
+                <div class="terminal" id="terminal"></div>
+            </div>
+        </div>
+
+        <!-- Step 5: Success -->
+        <div class="deploy-step hidden" id="step-5">
+            <div class="card">
+                <div class="success-wrap">
+                    <div class="success-ring">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h2 class="success-title">Deployed Successfully</h2>
+                    <p class="success-text">Your project is live and running on our infrastructure</p>
+                    <div class="btn-group" style="max-width:360px; margin:0 auto;">
+                        <a href="dashboard.html" class="btn btn-primary" style="text-decoration:none;">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                        <a href="deploy.html" class="btn btn-secondary" style="text-decoration:none;">
+                            <i class="fas fa-plus"></i> New Bot
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<script>
+    // ===== CONFIG =====
+const API_URL = window.location.origin;
+
+// ===== THEME SYSTEM =====
+const themeIcon = document.getElementById('theme-icon');
+const html = document.documentElement;
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('amzy-theme');
+    const savedMode = localStorage.getItem('amzy-theme-mode') || 'manual';
+
+    if (savedMode === 'system') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    } else if (savedTheme) {
+        html.setAttribute('data-theme', savedTheme);
+    } else {
+        html.setAttribute('data-theme', 'dark');
+    }
+    updateThemeIcon();
+}
+
+function updateThemeIcon() {
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    themeIcon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+}
+
+function toggleTheme() {
+    const current = html.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('amzy-theme', next);
+    localStorage.setItem('amzy-theme-mode', 'manual');
+    updateThemeIcon();
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (localStorage.getItem('amzy-theme-mode') === 'system') {
+        html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+        updateThemeIcon();
+    }
+});
+
+initTheme();
+
+// ===== PARTICLE NETWORK =====
+const canvas = document.getElementById('network-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+let mouse = { x: null, y: null };
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+class Particle {
+    constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
+        this.size = Math.random() * 1.5 + 0.5;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+        if (mouse.x != null) {
+            const dx = mouse.x - this.x;
+            const dy = mouse.y - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 120) {
+                const force = (120 - dist) / 120;
+                this.vx -= (dx / dist) * force * 0.3;
+                this.vy -= (dy / dist) * force * 0.3;
+            }
+        }
+    }
+
+    draw() {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = isDark 
+            ? `rgba(99, 102, 241, ${this.size * 0.2})`
+            : `rgba(79, 70, 229, ${this.size * 0.15})`;
+        ctx.fill();
+    }
+}
+
+function initParticles() {
+    particles = [];
+    const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 20000));
+    for (let i = 0; i < count; i++) particles.push(new Particle());
+}
+
+function animateParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const isDark = html.getAttribute('data-theme') === 'dark';
+
+    particles.forEach(p => { p.update(); p.draw(); });
+
+    for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+            const dx = particles[i].x - particles[j].x;
+            const dy = particles[i].y - particles[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 100) {
+                ctx.beginPath();
+                ctx.moveTo(particles[i].x, particles[i].y);
+                ctx.lineTo(particles[j].x, particles[j].y);
+                ctx.strokeStyle = isDark
+                    ? `rgba(99, 102, 241, ${0.06 * (1 - dist / 100)})`
+                    : `rgba(79, 70, 229, ${0.04 * (1 - dist / 100)})`;
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        }
+    }
+    requestAnimationFrame(animateParticles);
+}
+
+resizeCanvas();
+initParticles();
+animateParticles();
+
+window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+// ===== NAVBAR SCROLL =====
+let lastScroll = 0;
+window.addEventListener('scroll', () => {
+    const nav = document.querySelector('.navbar');
+    const y = window.scrollY;
+    if (y > lastScroll && y > 80) nav.style.transform = 'translateY(-100%)';
+    else nav.style.transform = 'translateY(0)';
+    lastScroll = y;
+});
+
+// ===== STEP NAVIGATION =====
+let curStep = 1;
+let upFiles = [];
+
+function updProg() {
+    const lang = document.getElementById('bot-language').value;
+    const isHtml = lang === 'html';
+    for (let i = 1; i <= 3; i++) {
+        const step = document.getElementById(`step-${i}-indicator`);
+        const line = document.getElementById(`line-${i}`);
+        const fill = line?.querySelector('.progress-line-fill');
+        let displayStep = curStep;
+        if (isHtml && curStep >= 3) displayStep = curStep - 1;
+        if (i < displayStep) {
+            step.classList.remove('active'); step.classList.add('completed');
+            if (fill) fill.classList.add('done');
+        } else if (i === displayStep) {
+            step.classList.add('active'); step.classList.remove('completed');
+            if (fill) fill.classList.remove('done');
+        } else {
+            step.classList.remove('active', 'completed');
+            if (fill) fill.classList.remove('done');
+        }
+    }
+}
+
+function nextStep(s) {
+    if (curStep === 1) {
+        const name = document.getElementById('bot-name').value.trim();
+        const token = document.getElementById('bot-token').value.trim();
+        const lang = document.getElementById('bot-language').value;
+        const subdomain = document.getElementById('subdomain').value.trim();
+        if (!name) { showErr('Enter a project name'); shake(document.getElementById('bot-name')); return; }
+        if (lang === 'html') {
+            if (!subdomain) { showErr('Enter a subdomain'); shake(document.getElementById('subdomain')); return; }
+            if (!/^[a-z0-9-]+$/.test(subdomain)) {
+                showErr('Subdomain can only contain lowercase letters, numbers, and hyphens');
+                shake(document.getElementById('subdomain')); return;
+            }
+            hideErr();
+            document.getElementById(`step-${curStep}`).classList.add('hidden');
+            curStep = 3;
+            const el = document.getElementById(`step-${curStep}`);
+            el.classList.remove('hidden');
+            updProg();
+            document.getElementById('review-name').textContent = name;
+            document.getElementById('review-type').textContent = 'Website';
+            document.getElementById('review-files').textContent = `${upFiles.length} file${upFiles.length !== 1 ? 's' : ''}`;
+            document.getElementById('deploy-cost').textContent = '20';
+            document.getElementById('review-subdomain-wrap').classList.remove('hidden');
+            document.getElementById('review-subdomain').textContent = subdomain + '.amzyhost.com';
+            const langWrap = document.getElementById('review-lang-wrap');
+            if (langWrap) langWrap.classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        } else {
+            if (!token) { showErr('Enter your bot token'); shake(document.getElementById('bot-token')); return; }
+            if (!/^\d+:[A-Za-z0-9_-]{35,}$/.test(token)) {
+                showErr('Invalid token format. Get it from @BotFather');
+                shake(document.getElementById('bot-token')); return;
+            }
+        }
+    }
+    if (curStep === 2 && upFiles.length === 0) {
+        showErr('Upload at least one file');
+        shake(document.getElementById('upload-zone')); return;
+    }
+    hideErr();
+    document.getElementById(`step-${curStep}`).classList.add('hidden');
+    curStep = s;
+    const el = document.getElementById(`step-${curStep}`);
+    el.classList.remove('hidden');
+    el.querySelector('.card')?.style.setProperty('animation', 'none');
+    el.offsetHeight;
+    el.querySelector('.card')?.style.setProperty('animation', '');
+    updProg();
+    if (s === 3) {
+        const lang = document.getElementById('bot-language').value;
+        document.getElementById('review-name').textContent = document.getElementById('bot-name').value;
+        document.getElementById('review-type').textContent = lang === 'html' ? 'Website' : 'Telegram Bot';
+        document.getElementById('review-files').textContent = `${upFiles.length} file${upFiles.length !== 1 ? 's' : ''}`;
+        const subWrap = document.getElementById('review-subdomain-wrap');
+        const langWrap = document.getElementById('review-lang-wrap');
+        if (lang === 'html') {
+            document.getElementById('deploy-cost').textContent = '20';
+            subWrap.classList.remove('hidden');
+            if (langWrap) langWrap.classList.add('hidden');
+            document.getElementById('review-subdomain').textContent = document.getElementById('subdomain').value.trim() + '.amzyhost.com';
+        } else {
+            document.getElementById('review-lang').textContent = lang === 'nodejs' ? 'Node.js v20' : 'Python v3.11';
+            document.getElementById('deploy-cost').textContent = lang === 'nodejs' ? '5' : '10';
+            subWrap.classList.add('hidden');
+            if (langWrap) langWrap.classList.remove('hidden');
+        }
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prevStep(s) {
+    hideErr();
+    document.getElementById(`step-${curStep}`).classList.add('hidden');
+    curStep = s;
+    document.getElementById(`step-${curStep}`).classList.remove('hidden');
+    updProg();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ===== RUNTIME SELECTION =====
+function selectLang(lang, el) {
+    document.querySelectorAll('.lang-card').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('bot-language').value = lang;
+
+    const tokenGroup = document.getElementById('token-group');
+    const subGroup = document.getElementById('subdomain-group');
+    const subInput = document.getElementById('subdomain');
+    const htmlUpload = document.getElementById('html-upload-group');
+    const uploadTypes = document.getElementById('upload-types');
+
+    if (lang === 'html') {
+        tokenGroup.classList.add('hidden');
+        subGroup.classList.remove('hidden');
+        htmlUpload.classList.remove('hidden');
+        subInput.setAttribute('required', 'required');
+        if (uploadTypes) uploadTypes.textContent = 'Supports .html, .css, .js, .png, .jpg, .svg, .json';
+        document.getElementById('deploy-cost').textContent = '20';
+    } else {
+        tokenGroup.classList.remove('hidden');
+        subGroup.classList.add('hidden');
+        htmlUpload.classList.add('hidden');
+        subInput.removeAttribute('required');
+        if (uploadTypes) uploadTypes.textContent = 'Supports .js, .py, .json, .env, .txt';
+        document.getElementById('deploy-cost').textContent = lang === 'nodejs' ? '5' : '10';
+    }
+}
+
+// ===== FILE UPLOAD =====
+function dragOverHandler(e) { 
+    e.preventDefault(); 
+    const uz = document.getElementById('upload-zone');
+    const huz = document.getElementById('html-upload-zone');
+    if (uz) uz.classList.add('dragover');
+    if (huz) huz.classList.add('dragover');
+}
+function dragLeaveHandler(e) { 
+    e.preventDefault(); 
+    const uz = document.getElementById('upload-zone');
+    const huz = document.getElementById('html-upload-zone');
+    if (uz) uz.classList.remove('dragover');
+    if (huz) huz.classList.remove('dragover');
+}
+function dropHandler(e) {
+    e.preventDefault();
+    const uz = document.getElementById('upload-zone');
+    const huz = document.getElementById('html-upload-zone');
+    if (uz) uz.classList.remove('dragover');
+    if (huz) huz.classList.remove('dragover');
+    const lang = document.getElementById('bot-language').value;
+    if (lang === 'html') {
+        handleFiles(e.dataTransfer.files, 'html-file-list');
+    } else {
+        handleFiles(e.dataTransfer.files);
+    }
+}
+function handleFiles(files, targetListId) {
+    const listId = targetListId || 'file-list';
+    const list = document.getElementById(listId);
+    Array.from(files).forEach(file => {
+        upFiles.push(file);
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `
+            <i class="fas fa-file-code"></i>
+            <span class="file-name">${file.name}</span>
+            <span class="file-size">${fmtSize(file.size)}</span>
+            <button class="file-remove" onclick="remFile(this,'${file.name}')">
+                <i class="fas fa-times"></i>
+            </button>`;
+        list.appendChild(item);
+    });
+}
+function remFile(btn, name) {
+    upFiles = upFiles.filter(f => f.name !== name);
+    btn.closest('.file-item').remove();
+}
+function fmtSize(b) {
+    if (!b) return '0 B';
+    const k = 1024, s = ['B','KB','MB'];
+    const i = Math.floor(Math.log(b) / Math.log(k));
+    return parseFloat((b / Math.pow(k, i)).toFixed(1)) + ' ' + s[i];
+}
+
+// ===== ERROR =====
+function showErr(msg) {
+    const a = document.getElementById('deploy-error');
+    document.getElementById('error-msg').textContent = msg;
+    a.classList.remove('hidden');
+}
+function hideErr() { document.getElementById('deploy-error').classList.add('hidden'); }
+function shake(el) {
+    el.classList.remove('shake');
+    el.offsetHeight;
+    el.classList.add('shake');
+    setTimeout(() => el.classList.remove('shake'), 500);
+}
+
+// ===== DEPLOY LOGS =====
+const nodeLogs = [
+    { t: 0, msg: 'Initializing build environment...', type: 'info' },
+    { t: 400, msg: 'Pulling base image node:20-alpine...', type: 'info' },
+    { t: 800, msg: 'Installing dependencies...', type: 'info' },
+    { t: 1200, msg: 'Found package.json, running npm ci', type: 'ok' },
+    { t: 1600, msg: 'Added 47 packages in 2.1s', type: 'ok' },
+    { t: 2000, msg: 'Copying source files...', type: 'info' },
+    { t: 2400, msg: 'Setting environment variables...', type: 'info' },
+    { t: 2800, msg: 'Validating Telegram token...', type: 'info' },
+    { t: 3200, msg: 'Token verified with @BotFather', type: 'ok' },
+    { t: 3600, msg: 'Starting container...', type: 'info' },
+    { t: 4000, msg: 'Container started successfully', type: 'ok' },
+    { t: 4400, msg: 'Health check passed', type: 'ok' },
+    { t: 4800, msg: 'Deployment complete!', type: 'ok' },
+];
+
+const pythonLogs = [
+    { t: 0, msg: 'Initializing build environment...', type: 'info' },
+    { t: 400, msg: 'Pulling base image python:3.11-slim...', type: 'info' },
+    { t: 800, msg: 'Installing dependencies...', type: 'info' },
+    { t: 1200, msg: 'Found requirements.txt, running pip install', type: 'ok' },
+    { t: 1600, msg: 'Added 23 packages in 1.8s', type: 'ok' },
+    { t: 2000, msg: 'Copying source files...', type: 'info' },
+    { t: 2400, msg: 'Setting environment variables...', type: 'info' },
+    { t: 2800, msg: 'Validating Telegram token...', type: 'info' },
+    { t: 3200, msg: 'Token verified with @BotFather', type: 'ok' },
+    { t: 3600, msg: 'Starting container...', type: 'info' },
+    { t: 4000, msg: 'Container started successfully', type: 'ok' },
+    { t: 4400, msg: 'Health check passed', type: 'ok' },
+    { t: 4800, msg: 'Deployment complete!', type: 'ok' },
+];
+
+const websiteLogs = [
+    { t: 0, msg: 'Initializing build environment...', type: 'info' },
+    { t: 400, msg: 'Pulling base image nginx:alpine...', type: 'info' },
+    { t: 800, msg: 'Scanning uploaded files...', type: 'info' },
+    { t: 1200, msg: 'Found index.html, copying to /usr/share/nginx/html', type: 'ok' },
+    { t: 1600, msg: 'Configuring nginx server block...', type: 'info' },
+    { t: 2000, msg: 'Setting up subdomain routing...', type: 'info' },
+    { t: 2400, msg: 'Enabling gzip compression...', type: 'ok' },
+    { t: 2800, msg: 'Starting nginx...', type: 'info' },
+    { t: 3200, msg: 'nginx started successfully', type: 'ok' },
+    { t: 3600, msg: 'SSL certificate provisioning...', type: 'info' },
+    { t: 4000, msg: 'HTTPS enabled', type: 'ok' },
+    { t: 4400, msg: 'Health check passed', type: 'ok' },
+    { t: 4800, msg: 'Website live!', type: 'ok' },
+];
+
+function deployBot() {
+    const btn = document.getElementById('deploy-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Deploying...';
+
+    const lang = document.getElementById('bot-language').value;
+    const cost = lang === 'html' ? 20 : (lang === 'nodejs' ? 5 : 10);
+    const coins = parseInt(localStorage.getItem('amzy-coins') || '0');
+    if (coins < cost) {
+        showErr('Not enough coins. Need ' + cost + ' coins.');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-rocket"></i> Deploy';
+        return;
+    }
+
+    setTimeout(() => {
+        document.getElementById('step-3').classList.add('hidden');
+        document.getElementById('step-4').classList.remove('hidden');
+        const term = document.getElementById('terminal');
+        term.innerHTML = '';
+
+        const logs = lang === 'html' ? websiteLogs : (lang === 'nodejs' ? nodeLogs : pythonLogs);
+        logs.forEach((log, i) => {
+            setTimeout(() => {
+                const line = document.createElement('div');
+                line.className = 'terminal-line';
+                line.style.animationDelay = '0s';
+                const time = new Date().toLocaleTimeString('en-US', { hour12: false });
+                const icon = log.type === 'ok' ? '✓' : '›';
+                const cls = log.type === 'ok' ? 'term-ok' : 'term-info';
+                line.innerHTML = `<span class="term-time">[${time}]</span> <span class="${cls}">${icon} ${log.msg}</span>`;
+                term.appendChild(line);
+                term.scrollTop = term.scrollHeight;
+            }, log.t);
+        });
+
+        setTimeout(() => {
+            document.getElementById('step-4').classList.add('hidden');
+            document.getElementById('step-5').classList.remove('hidden');
+
+            localStorage.setItem('amzy-coins', Math.max(0, coins - cost));
+            updateCoins();
+
+            const bots = JSON.parse(localStorage.getItem('amzy-bots') || '[]');
+            const botData = {
+                name: document.getElementById('bot-name').value,
+                active: true,
+                created: new Date().toISOString(),
+                type: lang === 'html' ? 'website' : 'bot',
+                language: lang
+            };
+            if (lang === 'html') {
+                botData.subdomain = document.getElementById('subdomain').value.trim() + '.amzyhost.com';
+            }
+            bots.push(botData);
+            localStorage.setItem('amzy-bots', JSON.stringify(bots));
+        }, 5200);
+    }, 600);
+}
+
+// ===== COINS =====
+function updateCoins() {
+    const c = parseInt(localStorage.getItem('amzy-coins') || '0');
+    document.getElementById('coin-balance').textContent = c;
+}
+
+// ===== LOGOUT =====
+function logout() {
+    localStorage.removeItem('amzy-token');
+    localStorage.removeItem('amzy-user');
+    window.location.href = 'login.html';
+}
+
+// ===== AUTH =====
+if (!localStorage.getItem('amzy-token')) window.location.href = 'login.html';
+updateCoins();
+</script>
+
+</body>
+</html>

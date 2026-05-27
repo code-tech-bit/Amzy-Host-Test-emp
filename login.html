@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amzy Host — Access Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --font-display: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+            
+            /* Dark theme (default) — refined palette */
+            --bg-primary: #050508;
+            --bg-secondary: rgba(255,255,255,0.02);
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-glass: rgba(255,255,255,0.05);
+            --bg-input: rgba(255,255,255,0.04);
+            --text-primary: #f0f0f5;
+            --text-secondary: rgba(255,255,255,0.55);
+            --text-muted: rgba(255,255,255,0.35);
+            --border-color: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.15);
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-glow: rgba(99,102,241,0.4);
+            --accent-glow-soft: rgba(99,102,241,0.15);
+            --error: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --glow-color: rgba(99,102,241,0.1);
+            --grid-color: rgba(255,255,255,0.015);
+            --scanline-color: rgba(255,255,255,0.015);
+            --shadow-color: rgba(0,0,0,0.4);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(0,0,0,0.02);
+            --bg-card: rgba(255,255,255,0.7);
+            --bg-glass: rgba(255,255,255,0.6);
+            --bg-input: rgba(0,0,0,0.03);
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15,23,42,0.55);
+            --text-muted: rgba(15,23,42,0.35);
+            --border-color: rgba(0,0,0,0.06);
+            --border-hover: rgba(0,0,0,0.15);
+            --accent: #4f46e5;
+            --accent-light: #6366f1;
+            --accent-glow: rgba(79,70,229,0.3);
+            --accent-glow-soft: rgba(79,70,229,0.1);
+            --glow-color: rgba(79,70,229,0.08);
+            --grid-color: rgba(0,0,0,0.03);
+            --scanline-color: rgba(0,0,0,0.01);
+            --shadow-color: rgba(0,0,0,0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            transition: background 0.6s ease, color 0.6s ease;
+        }
+
+        /* ===== PARTICLE NETWORK BACKGROUND ===== */
+        #network-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* ===== GRID OVERLAY ===== */
+        .grid-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+        }
+
+        /* ===== SCANLINES ===== */
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            z-index: 3;
+            background: linear-gradient(to bottom, transparent 50%, var(--scanline-color) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* ===== VIGNETTE ===== */
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 4;
+            background: radial-gradient(ellipse at center, transparent 0%, var(--bg-primary) 90%);
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+
+        /* ===== AMBIENT GLOWS ===== */
+        .ambient-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 1;
+            transition: opacity 0.6s ease;
+        }
+
+        .ambient-glow-1 {
+            background: var(--accent);
+            top: -200px;
+            right: -200px;
+            animation: floatGlow 8s ease-in-out infinite;
+        }
+
+        .ambient-glow-2 {
+            background: var(--accent-light);
+            bottom: -300px;
+            left: -200px;
+            width: 500px;
+            height: 500px;
+            animation: floatGlow 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes floatGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1000;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-card);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            transform: rotate(15deg) scale(1.1);
+            box-shadow: 0 0 30px var(--accent-glow-soft);
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .login-page {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            height: 100vh;
+            align-items: center;
+            justify-content: center;
+            gap: 80px;
+            padding: 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ===== LEFT SIDE ===== */
+        .login-left {
+            flex: 1;
+            max-width: 560px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .brand-section {
+            margin-bottom: 48px;
+        }
+
+        .logo-ring {
+            width: 72px;
+            height: 72px;
+            border-radius: 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 32px;
+            font-weight: 900;
+            color: var(--accent);
+            margin-bottom: 32px;
+            position: relative;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 40px var(--accent-glow-soft), inset 0 0 20px var(--accent-glow-soft);
+            animation: logoPulse 4s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 40px var(--accent-glow-soft), inset 0 0 20px var(--accent-glow-soft); }
+            50% { box-shadow: 0 0 60px var(--accent-glow), inset 0 0 30px var(--accent-glow-soft); }
+        }
+
+        .logo-ring::before {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            border-radius: 22px;
+            padding: 2px;
+            background: linear-gradient(135deg, var(--accent), transparent 50%, var(--accent-light));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0.5;
+        }
+
+        .glitch-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .glitch-text {
+            font-family: var(--font-display);
+            font-size: 64px;
+            font-weight: 900;
+            color: var(--text-primary);
+            letter-spacing: -2px;
+            line-height: 1.1;
+            position: relative;
+        }
+
+        .glitch-text::before,
+        .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.8;
+        }
+
+        .glitch-text::before {
+            animation: glitch-1 3s infinite linear alternate-reverse;
+            color: var(--accent);
+            z-index: -1;
+            clip-path: polygon(0 0, 100% 0, 100% 45%, 0 45%);
+        }
+
+        .glitch-text::after {
+            animation: glitch-2 2s infinite linear alternate-reverse;
+            color: var(--accent-light);
+            z-index: -2;
+            clip-path: polygon(0 55%, 100% 55%, 100% 100%, 0 100%);
+        }
+
+        @keyframes glitch-1 {
+            0% { transform: translate(0); }
+            20% { transform: translate(-3px, 2px); }
+            40% { transform: translate(3px, -2px); }
+            60% { transform: translate(-2px, 3px); }
+            80% { transform: translate(2px, -3px); }
+            100% { transform: translate(0); }
+        }
+
+        @keyframes glitch-2 {
+            0% { transform: translate(0); }
+            20% { transform: translate(3px, -2px); }
+            40% { transform: translate(-3px, 2px); }
+            60% { transform: translate(2px, -3px); }
+            80% { transform: translate(-2px, 3px); }
+            100% { transform: translate(0); }
+        }
+
+        .typing-container {
+            height: 32px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+        }
+
+        .typing-text {
+            font-family: var(--font-display);
+            font-size: 14px;
+            color: var(--accent);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 20px;
+            background: var(--accent);
+            margin-left: 8px;
+            animation: blink 0.8s infinite;
+            vertical-align: middle;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .desc-text {
+            font-size: 16px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            margin-bottom: 40px;
+            max-width: 480px;
+        }
+
+        /* Feature Grid — Bento Style */
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            padding: 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, var(--accent-glow-soft), transparent);
+            transition: left 0.6s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
+
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--shadow-color), 0 0 20px var(--accent-glow-soft);
+        }
+
+        .feature-card i {
+            font-size: 20px;
+            margin-bottom: 12px;
+            display: block;
+            color: var(--accent);
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover i {
+            transform: scale(1.1);
+        }
+
+        .feature-card strong {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .feature-card span {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            display: block;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: flex;
+            gap: 40px;
+            padding-top: 32px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stat-box {
+            position: relative;
+        }
+
+        .stat-number {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: block;
+            line-height: 1;
+            margin-bottom: 6px;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* ===== RIGHT SIDE — GLASS CARD ===== */
+        .login-right {
+            width: 420px;
+            flex-shrink: 0;
+            perspective: 1000px;
+        }
+
+        .glass-card {
+            width: 100%;
+            padding: 40px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.1s ease-out, box-shadow 0.3s ease, border-color 0.3s ease;
+            box-shadow: 
+                0 20px 60px var(--shadow-color),
+                0 0 0 1px rgba(255,255,255,0.02) inset;
+        }
+
+        [data-theme="light"] .glass-card {
+            box-shadow: 
+                0 20px 60px var(--shadow-color),
+                0 0 0 1px rgba(0,0,0,0.02) inset;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            padding: 1px;
+            background: linear-gradient(135deg, var(--border-hover), transparent 40%, transparent 60%, var(--accent-glow-soft));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .card-inner {
+            position: relative;
+            z-index: 2;
+            transform: translateZ(30px);
+        }
+
+        .card-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .card-header h2 {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            color: var(--text-primary);
+        }
+
+        .card-header p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* Input Fields */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 16px 16px 16px 48px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: var(--font-body);
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px var(--accent-glow-soft), 0 0 20px var(--accent-glow-soft);
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+            transition: color 0.3s ease;
+            pointer-events: none;
+        }
+
+        .input-group input:focus ~ .input-icon {
+            color: var(--accent);
+        }
+
+        .input-group .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .input-group .toggle-password:hover {
+            color: var(--text-primary);
+        }
+
+        /* Error Message */
+        .error-message {
+            color: var(--error);
+            font-size: 13px;
+            margin-top: -12px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(239,68,68,0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(239,68,68,0.15);
+        }
+
+        .error-message.show {
+            display: flex;
+            animation: shake 0.4s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: var(--font-body);
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 20px var(--accent-glow-soft);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-glow);
+            background: var(--accent-light);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary .spinner {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Divider */
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 24px 0;
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border-color);
+        }
+
+        /* Social Login */
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .social-btn {
+            padding: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .social-btn:hover {
+            background: var(--bg-secondary);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .social-btn.github:hover {
+            border-color: #333;
+            color: #fff;
+        }
+
+        .social-btn.google:hover {
+            border-color: #ea4335;
+            color: #ea4335;
+        }
+
+        .social-btn.discord:hover {
+            border-color: #5865f2;
+            color: #5865f2;
+        }
+
+        /* Terms */
+        .terms-text {
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .terms-text a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .terms-text a:hover {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideDown 0.3s ease, fadeOut 0.3s ease 2.7s;
+            backdrop-filter: blur(20px);
+            pointer-events: auto;
+            border: 1px solid;
+        }
+
+        .toast.success {
+            background: rgba(16,185,129,0.1);
+            border-color: rgba(16,185,129,0.2);
+            color: var(--success);
+        }
+
+        .toast.error {
+            background: rgba(239,68,68,0.1);
+            border-color: rgba(239,68,68,0.2);
+            color: var(--error);
+        }
+
+        .toast.info {
+            background: rgba(99,102,241,0.1);
+            border-color: rgba(99,102,241,0.2);
+            color: var(--accent);
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .login-page {
+                flex-direction: column;
+                gap: 40px;
+                padding: 100px 24px 40px;
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+            }
+            .login-left {
+                max-width: 100%;
+                text-align: center;
+                align-items: center;
+            }
+            .login-right {
+                width: 100%;
+                max-width: 420px;
+            }
+            .glitch-text { font-size: 48px; }
+            .feature-grid { max-width: 100%; }
+            .desc-text { max-width: 100%; }
+            .stats-row { justify-content: center; }
+        }
+
+        @media (max-width: 640px) {
+            .glitch-text { font-size: 36px; }
+            .glass-card { padding: 32px 24px; }
+            .logo-ring { width: 60px; height: 60px; font-size: 24px; }
+            .theme-toggle { top: 16px; right: 16px; }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Noise texture overlay */
+        .noise {
+            position: fixed;
+            inset: 0;
+            z-index: 5;
+            opacity: 0.02;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Effects -->
+    <canvas id="network-canvas"></canvas>
+    <div class="grid-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="noise"></div>
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
+        <i class="fas fa-sun" id="theme-icon"></i>
+    </button>
+
+    <!-- Main Content -->
+    <div class="login-page">
+        
+        <!-- LEFT SIDE -->
+        <div class="login-left">
+            <div class="brand-section">
+                <div class="logo-ring">A</div>
+                
+                <div class="glitch-wrapper">
+                    <h1 class="glitch-text" data-text="AMZY HOST">AMZY HOST</h1>
+                </div>
+
+                <div class="typing-container">
+                    <span class="typing-text" id="typing-text"></span>
+                    <span class="typing-cursor"></span>
+                </div>
+
+                <p class="desc-text">
+                    Deploy your Telegram bots and VPS instances with enterprise-grade infrastructure. 
+                    Built for developers who demand speed, security, and scale.
+                </p>
+
+                <div class="feature-grid">
+                    <div class="feature-card" onclick="createBurst(event)">
+                        <i class="fas fa-bolt"></i>
+                        <strong>Instant Deploy</strong>
+                        <span>Sub-second deployment pipeline</span>
+                    </div>
+                    <div class="feature-card" onclick="createBurst(event)">
+                        <i class="fas fa-shield-halved"></i>
+                        <strong>Secure Core</strong>
+                        <span>Enterprise-grade protection</span>
+                    </div>
+                    <div class="feature-card" onclick="createBurst(event)">
+                        <i class="fas fa-chart-line"></i>
+                        <strong>Real-time Analytics</strong>
+                        <span>Live monitoring & insights</span>
+                    </div>
+                    <div class="feature-card" onclick="createBurst(event)">
+                        <i class="fas fa-globe"></i>
+                        <strong>Global Edge</strong>
+                        <span>6 regions worldwide</span>
+                    </div>
+                </div>
+
+                <div class="stats-row">
+                    <div class="stat-box">
+                        <span class="stat-number" id="stat-users">0</span>
+                        <span class="stat-label">Active Users</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number" id="stat-bots">0</span>
+                        <span class="stat-label">Bots Hosted</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-number" id="stat-uptime">99.9%</span>
+                        <span class="stat-label">Uptime</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="login-right">
+            <div class="glass-card" id="glass-card">
+                <div class="card-inner">
+                    <div class="card-header">
+                        <h2>Access Portal</h2>
+                        <p>Authenticate to enter the system</p>
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-envelope input-icon"></i>
+                        <input type="email" id="email" placeholder="Email address" autocomplete="email">
+                    </div>
+
+                    <div class="input-group">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+                        <i class="fas fa-eye toggle-password" id="toggle-password" onclick="togglePassword()"></i>
+                    </div>
+
+                    <div class="error-message" id="error-message">
+                        <i class="fas fa-circle-exclamation"></i>
+                        <span id="error-text"></span>
+                    </div>
+
+                    <button class="btn-primary" id="login-btn" onclick="handleLogin(this)">
+                        <span class="btn-text">Initialize Session</span>
+                        <div class="spinner"></div>
+                        <i class="fas fa-arrow-right" id="btn-icon"></i>
+                    </button>
+
+                    <div class="divider">or continue with</div>
+
+                    <div class="social-grid">
+                        <a href="/api/auth/github" class="social-btn github" title="GitHub">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <button class="social-btn google" onclick="showToast('Google OAuth coming soon', 'info')" title="Google">
+                            <i class="fab fa-google"></i>
+                        </button>
+                        <button class="social-btn discord" onclick="showToast('Discord OAuth coming soon', 'info')" title="Discord">
+                            <i class="fab fa-discord"></i>
+                        </button>
+                    </div>
+
+                    <p class="terms-text">
+                        By accessing this portal, you agree to the<br>
+                        <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Protocol</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // ===== CONFIG =====
+    const API_URL = window.location.origin;
+
+    // ===== THEME SYSTEM =====
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('amzy-theme');
+        if (savedTheme) {
+            html.setAttribute('data-theme', savedTheme);
+        } else {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        }
+        updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        themeIcon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', newTheme);
+        localStorage.setItem('amzy-theme', newTheme);
+        updateThemeIcon();
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('amzy-theme')) {
+            html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+    });
+
+    initTheme();
+
+    // ===== PARTICLE NETWORK =====
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: null, y: null };
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.5;
+            this.vy = (Math.random() - 0.5) * 0.5;
+            this.size = Math.random() * 2 + 1;
+        }
+
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+            // Mouse interaction
+            if (mouse.x != null) {
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 150) {
+                    const force = (150 - dist) / 150;
+                    this.vx -= (dx / dist) * force * 0.5;
+                    this.vy -= (dy / dist) * force * 0.5;
+                }
+            }
+        }
+
+        draw() {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = isDark 
+                ? `rgba(99, 102, 241, ${this.size * 0.15})`
+                : `rgba(79, 70, 229, ${this.size * 0.1})`;
+            ctx.fill();
+        }
+    }
+
+    function initParticles() {
+        particles = [];
+        const count = Math.min(100, Math.floor((canvas.width * canvas.height) / 15000));
+        for (let i = 0; i < count; i++) {
+            particles.push(new Particle());
+        }
+    }
+
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const isDark = html.getAttribute('data-theme') === 'dark';
+
+        particles.forEach(p => {
+            p.update();
+            p.draw();
+        });
+
+        // Draw connections
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 120) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = isDark
+                        ? `rgba(99, 102, 241, ${0.08 * (1 - dist / 120)})`
+                        : `rgba(79, 70, 229, ${0.05 * (1 - dist / 120)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        requestAnimationFrame(animateParticles);
+    }
+
+    resizeCanvas();
+    initParticles();
+    animateParticles();
+
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        initParticles();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+
+    window.addEventListener('mouseleave', () => {
+        mouse.x = null;
+        mouse.y = null;
+    });
+
+    // Click burst effect
+    function createBurst(event) {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 8; i++) {
+            const particle = new Particle();
+            particle.x = x;
+            particle.y = y;
+            particle.vx = (Math.random() - 0.5) * 8;
+            particle.vy = (Math.random() - 0.5) * 8;
+            particle.size = Math.random() * 3 + 2;
+            particles.push(particle);
+            
+            setTimeout(() => {
+                const idx = particles.indexOf(particle);
+                if (idx > -1) particles.splice(idx, 1);
+            }, 1000);
+        }
+    }
+
+    // ===== TYPING EFFECT =====
+    const phrases = ['Deploy Bots Instantly', 'Scale Without Limits', 'Secure by Default', 'Built for Developers'];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+
+    function typeEffect() {
+        const typingElement = document.getElementById('typing-text');
+        const currentPhrase = phrases[phraseIndex];
+        
+        if (isDeleting) {
+            typingElement.textContent = currentPhrase.substring(0, charIndex - 1);
+            charIndex--;
+        } else {
+            typingElement.textContent = currentPhrase.substring(0, charIndex + 1);
+            charIndex++;
+        }
+
+        let typeSpeed = isDeleting ? 40 : 80;
+
+        if (!isDeleting && charIndex === currentPhrase.length) {
+            typeSpeed = 2000;
+            isDeleting = true;
+        } else if (isDeleting && charIndex === 0) {
+            isDeleting = false;
+            phraseIndex = (phraseIndex + 1) % phrases.length;
+            typeSpeed = 500;
+        }
+
+        setTimeout(typeEffect, typeSpeed);
+    }
+    typeEffect();
+
+    // ===== 3D TILT CARD =====
+    const glassCard = document.getElementById('glass-card');
+    
+    glassCard.addEventListener('mousemove', (e) => {
+        const rect = glassCard.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = (y - centerY) / 25;
+        const rotateY = (centerX - x) / 25;
+        
+        glassCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+    });
+
+    glassCard.addEventListener('mouseleave', () => {
+        glassCard.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+    });
+
+    // ===== ANIMATED COUNTERS =====
+    function animateCounter(id, target, duration = 2000) {
+        const el = document.getElementById(id);
+        const increment = target / (duration / 16);
+        let current = 0;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            el.textContent = Math.floor(current).toLocaleString();
+        }, 16);
+    }
+
+    window.addEventListener('load', () => {
+        setTimeout(() => animateCounter('stat-users', 2847), 300);
+        setTimeout(() => animateCounter('stat-bots', 943), 600);
+    });
+
+    // ===== TOAST NOTIFICATIONS =====
+    function showToast(message, type = 'success') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-circle-exclamation',
+            info: 'fa-info-circle'
+        };
+        toast.innerHTML = `
+            <i class="fas ${icons[type]}"></i>
+            <span>${message}</span>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ===== PASSWORD TOGGLE =====
+    function togglePassword() {
+        const passwordInput = document.getElementById('password');
+        const toggleIcon = document.getElementById('toggle-password');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleIcon.classList.remove('fa-eye');
+            toggleIcon.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            toggleIcon.classList.remove('fa-eye-slash');
+            toggleIcon.classList.add('fa-eye');
+        }
+    }
+
+    // ===== LOGIN HANDLER =====
+    function showError(message) {
+        const errorEl = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+        errorText.textContent = message;
+        errorEl.classList.add('show');
+        setTimeout(() => errorEl.classList.remove('show'), 5000);
+    }
+
+    async function handleLogin(btn) {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+        const spinner = btn.querySelector('.spinner');
+        const icon = btn.querySelector('#btn-icon');
+        const text = btn.querySelector('.btn-text');
+        
+        if (!email || !password) {
+            showError('Please fill in all fields');
+            return;
+        }
+        
+        if (!email.includes('@')) {
+            showError('Please enter a valid email address');
+            return;
+        }
+
+        btn.disabled = true;
+        text.style.display = 'none';
+        icon.style.display = 'none';
+        spinner.style.display = 'block';
+
+        try {
+            const response = await fetch(`${API_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Authentication failed');
+            }
+
+            localStorage.setItem('amzy-token', data.token);
+            localStorage.setItem('amzy-user', JSON.stringify(data.user));
+            
+            showToast('Session initialized successfully', 'success');
+            
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1000);
+
+        } catch (error) {
+            showError(error.message || 'Network error. Please try again.');
+            btn.disabled = false;
+            text.style.display = 'block';
+            icon.style.display = 'block';
+            spinner.style.display = 'none';
+        }
+    }
+
+    // ===== GITHUB OAUTH =====
+    function handleOAuthCallback() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const error = urlParams.get('error');
+
+        if (error) {
+            showToast('Authentication failed', 'error');
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        }
+
+        if (token) {
+            localStorage.setItem('amzy-token', token);
+            fetch(`${API_URL}/api/user/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            })
+            .then(res => res.json())
+            .then(user => {
+                localStorage.setItem('amzy-user', JSON.stringify(user));
+                showToast('GitHub login successful', 'success');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1000);
+            })
+            .catch(() => {
+                showToast('Failed to fetch user data', 'error');
+            });
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    }
+
+    // ===== INIT =====
+    const existingToken = localStorage.getItem('amzy-token');
+    if (existingToken) {
+        fetch(`${API_URL}/api/user/me`, {
+            headers: { 'Authorization': `Bearer ${existingToken}` }
+        })
+        .then(res => {
+            if (res.ok) {
+                window.location.href = 'dashboard.html';
+            } else {
+                localStorage.removeItem('amzy-token');
+                localStorage.removeItem('amzy-user');
+            }
+        })
+        .catch(() => {});
+    }
+
+    handleOAuthCallback();
+
+    document.getElementById('password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleLogin(document.getElementById('login-btn'));
+        }
+    });
+
+    // ===== MOUSE PARALLAX =====
+    document.addEventListener('mousemove', (e) => {
+        const moveX = (e.clientX - window.innerWidth / 2) * 0.005;
+        const moveY = (e.clientY - window.innerHeight / 2) * 0.005;
+        document.querySelector('.login-left').style.transform = `translate(${moveX}px, ${moveY}px)`;
+    });
+</script>
+
+</body>
+</html>

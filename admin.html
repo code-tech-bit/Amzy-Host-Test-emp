@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Amzy Host</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --font-display: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --bg-primary: #050508;
+            --bg-secondary: rgba(255,255,255,0.02);
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-glass: rgba(255,255,255,0.04);
+            --bg-input: rgba(255,255,255,0.04);
+            --bg-hover: rgba(255,255,255,0.06);
+            --text-primary: #f0f0f5;
+            --text-secondary: rgba(255,255,255,0.55);
+            --text-muted: rgba(255,255,255,0.4);
+            --text-faint: rgba(255,255,255,0.3);
+            --text-dim: rgba(255,255,255,0.2);
+            --border-color: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.12);
+            --border-active: rgba(255,255,255,0.2);
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-glow: rgba(99,102,241,0.35);
+            --accent-glow-soft: rgba(99,102,241,0.1);
+            --error: #ef4444;
+            --error-soft: rgba(239,68,68,0.1);
+            --success: #10b981;
+            --success-soft: rgba(16,185,129,0.1);
+            --warning: #f59e0b;
+            --shadow-color: rgba(0,0,0,0.4);
+            --grid-color: rgba(255,255,255,0.015);
+            --scanline-color: rgba(255,255,255,0.012);
+            --modal-bg: rgba(5,5,5,0.95);
+            --navbar-bg: rgba(5,5,8,0.7);
+            --code-bg: rgba(255,255,255,0.04);
+        }
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(0,0,0,0.02);
+            --bg-card: rgba(255,255,255,0.7);
+            --bg-glass: rgba(255,255,255,0.6);
+            --bg-input: rgba(0,0,0,0.03);
+            --bg-hover: rgba(0,0,0,0.04);
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15,23,42,0.55);
+            --text-muted: rgba(15,23,42,0.45);
+            --text-faint: rgba(15,23,42,0.3);
+            --text-dim: rgba(15,23,42,0.2);
+            --border-color: rgba(0,0,0,0.06);
+            --border-hover: rgba(0,0,0,0.12);
+            --border-active: rgba(0,0,0,0.2);
+            --accent: #4f46e5;
+            --accent-light: #6366f1;
+            --accent-glow: rgba(79,70,229,0.25);
+            --accent-glow-soft: rgba(79,70,229,0.08);
+            --shadow-color: rgba(0,0,0,0.08);
+            --grid-color: rgba(0,0,0,0.03);
+            --scanline-color: rgba(0,0,0,0.008);
+            --modal-bg: rgba(255,255,255,0.95);
+            --navbar-bg: rgba(248,250,252,0.8);
+            --code-bg: rgba(0,0,0,0.05);
+            --success: #16a34a;
+            --error: #dc2626;
+            --warning: #d97706;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+        #network-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+        .grid-overlay {
+            position: fixed; inset: 0; z-index: 1;
+            background-image: linear-gradient(var(--grid-color) 1px, transparent 1px), linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px; pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+        }
+        .scanlines {
+            position: fixed; inset: 0; z-index: 2;
+            background: linear-gradient(to bottom, transparent 50%, var(--scanline-color) 50%);
+            background-size: 100% 4px; pointer-events: none;
+            animation: scanMove 10s linear infinite;
+        }
+        @keyframes scanMove { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
+        .vignette {
+            position: fixed; inset: 0; z-index: 3;
+            background: radial-gradient(ellipse at center, transparent 30%, var(--bg-primary) 90%);
+            pointer-events: none; transition: opacity 0.5s ease;
+        }
+        .noise {
+            position: fixed; inset: 0; z-index: 4; opacity: 0.015; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+        .ambient-glow {
+            position: fixed; width: 500px; height: 500px; border-radius: 50%; filter: blur(120px);
+            opacity: 0.1; pointer-events: none; z-index: 0; transition: opacity 0.5s ease;
+        }
+        .ambient-glow-1 { background: var(--accent); top: -200px; right: -100px; animation: floatGlow 8s ease-in-out infinite; }
+        .ambient-glow-2 { background: var(--accent-light); bottom: -300px; left: -100px; animation: floatGlow 10s ease-in-out infinite reverse; }
+        @keyframes floatGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 32px; height: 68px;
+            background: var(--navbar-bg);
+            backdrop-filter: blur(24px) saturate(1.2);
+            -webkit-backdrop-filter: blur(24px) saturate(1.2);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease, background 0.5s ease, border-color 0.5s ease;
+        }
+        .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .logo-icon {
+            width: 36px; height: 36px; border: 1.5px solid var(--accent); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-size: 18px; font-weight: 900; color: var(--accent);
+            animation: logoPulse 3s ease-in-out infinite;
+            box-shadow: 0 0 12px var(--accent-glow-soft), inset 0 0 12px var(--accent-glow-soft);
+            transition: border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+        }
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 12px var(--accent-glow-soft), inset 0 0 12px var(--accent-glow-soft); }
+            50% { box-shadow: 0 0 24px var(--accent-glow), inset 0 0 18px var(--accent-glow-soft); }
+        }
+        .brand-text {
+            font-family: var(--font-display); font-size: 16px; font-weight: 700;
+            letter-spacing: 3px; text-transform: uppercase; color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+        .nav-links { display: flex; gap: 6px; }
+        .nav-links a {
+            padding: 8px 18px; border-radius: 8px; color: var(--text-muted);
+            text-decoration: none; font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 8px;
+            transition: all 0.3s ease; position: relative; overflow: hidden;
+        }
+        .nav-links a::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, var(--bg-hover), transparent);
+            border-radius: 8px; opacity: 0; transition: opacity 0.3s;
+        }
+        .nav-links a:hover::before, .nav-links a.active::before { opacity: 1; }
+        .nav-links a:hover, .nav-links a.active { color: var(--text-primary); background: var(--bg-secondary); }
+        .nav-links a.active { box-shadow: inset 0 1px 0 var(--border-hover), 0 0 20px var(--accent-glow-soft); }
+        .nav-right { display: flex; align-items: center; gap: 14px; }
+        .admin-badge {
+            display: flex; align-items: center; gap: 6px;
+            padding: 5px 12px; background: var(--bg-glass);
+            border: 1px solid var(--border-color); border-radius: 100px;
+            font-family: var(--font-display); font-size: 10px; letter-spacing: 2px;
+            text-transform: uppercase; color: var(--accent);
+            transition: all 0.5s ease;
+        }
+        .theme-toggle-btn {
+            width: 36px; height: 36px; border-radius: 9px;
+            background: var(--bg-glass); border: 1px solid var(--border-color);
+            color: var(--text-muted); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        .theme-toggle-btn:hover {
+            background: var(--bg-hover); color: var(--text-primary);
+            transform: rotate(15deg) scale(1.1); border-color: var(--border-hover);
+        }
+        .user-menu { position: relative; }
+        .user-menu .avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            border: 1.5px solid var(--border-color); cursor: pointer;
+            transition: all 0.3s ease; object-fit: cover;
+        }
+        .user-menu .avatar:hover { border-color: var(--accent); box-shadow: 0 0 20px var(--accent-glow-soft); }
+        .user-menu .dropdown {
+            position: absolute; top: 50px; right: 0; width: 190px;
+            background: var(--modal-bg); border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 8px; opacity: 0; pointer-events: none;
+            transform: translateY(-8px) scale(0.96);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(24px);
+        }
+        .user-menu:hover .dropdown { opacity: 1; pointer-events: all; transform: translateY(0) scale(1); }
+        .user-menu .dropdown a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 12px; border-radius: 8px; color: var(--text-muted);
+            text-decoration: none; font-size: 13px; transition: all 0.2s ease;
+        }
+        .user-menu .dropdown a:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .user-menu .dropdown hr { border: none; border-top: 1px solid var(--border-color); margin: 6px 0; }
+        .main-content {
+            position: relative; z-index: 10;
+            padding: 100px 32px 48px;
+            max-width: 1200px; margin: 0 auto;
+        }
+        .page-header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 32px;
+        }
+        .page-title {
+            font-family: var(--font-display); font-size: 28px; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase; color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+        .page-title::after {
+            content: ''; display: block; width: 40px; height: 2px;
+            background: linear-gradient(90deg, var(--accent), transparent);
+            margin-top: 8px; opacity: 0.6;
+            animation: titleLine 3s ease-in-out infinite;
+        }
+        @keyframes titleLine {
+            0%, 100% { width: 40px; opacity: 0.6; }
+            50% { width: 80px; opacity: 0.3; }
+        }
+        .live-indicator {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 12px; color: var(--text-muted); letter-spacing: 1px;
+            transition: color 0.5s ease;
+        }
+        .live-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent); animation: livePulse 2s ease-in-out infinite;
+        }
+        @keyframes livePulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-glow); }
+            50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(99,102,241,0); }
+        }
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+            margin-bottom: 32px;
+        }
+        .stat-card {
+            padding: 24px; background: var(--bg-card);
+            border: 1px solid var(--border-color); border-radius: 20px;
+            display: flex; align-items: center; gap: 16px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative; overflow: hidden;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .stat-card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 20px; padding: 1px;
+            background: linear-gradient(160deg, var(--border-hover) 0%, transparent 40%, transparent 60%, var(--accent-glow-soft) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none;
+        }
+        .stat-card::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+            transition: left 0.6s;
+        }
+        .stat-card:hover::after { left: 100%; }
+        .stat-card:hover {
+            background: var(--bg-glass); border-color: var(--border-hover);
+            transform: translateY(-3px); box-shadow: 0 20px 60px var(--shadow-color);
+        }
+        .stat-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-glass); border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; color: var(--accent);
+            transition: all 0.3s ease; box-shadow: 0 0 15px var(--accent-glow-soft);
+        }
+        .stat-card:hover .stat-icon {
+            background: var(--accent-glow-soft); border-color: var(--accent);
+            box-shadow: 0 0 25px var(--accent-glow-soft); transform: scale(1.1);
+        }
+        .stat-info h3 {
+            font-family: var(--font-display); font-size: 24px; font-weight: 700;
+            margin-bottom: 4px; color: var(--text-primary);
+            text-shadow: 0 0 20px var(--accent-glow-soft);
+            transition: color 0.5s ease;
+        }
+        .stat-info p {
+            font-size: 11px; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 2px;
+            transition: color 0.5s ease;
+        }
+        .tabs {
+            display: flex; gap: 8px; margin-bottom: 24px;
+            padding: 4px; background: var(--bg-secondary);
+            border: 1px solid var(--border-color); border-radius: 14px;
+            width: fit-content; transition: all 0.5s ease;
+        }
+        .tab-btn {
+            padding: 10px 20px; background: transparent; border: none; border-radius: 10px;
+            color: var(--text-muted); font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 8px;
+            font-family: var(--font-body); white-space: nowrap;
+        }
+        .tab-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
+        .tab-btn.active {
+            background: var(--bg-glass); color: var(--text-primary);
+            box-shadow: 0 2px 10px var(--shadow-color), inset 0 1px 0 var(--border-hover);
+        }
+        .tab-btn i { font-size: 13px; }
+        .tab-content { animation: tabEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tab-content.hidden { display: none; }
+        @keyframes tabEnter {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 28px;
+            transition: all 0.4s ease; position: relative; overflow: hidden;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .card::before {
+            content: ''; position: absolute; inset: 0; border-radius: 20px; padding: 1px;
+            background: linear-gradient(160deg, var(--border-hover) 0%, transparent 40%, transparent 60%, var(--accent-glow-soft) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none;
+        }
+        .card:hover { border-color: var(--border-hover); box-shadow: 0 20px 60px var(--shadow-color); }
+        .card h3 {
+            font-family: var(--font-display); font-size: 13px; letter-spacing: 1.5px;
+            text-transform: uppercase; margin-bottom: 20px; color: var(--text-secondary);
+            transition: color 0.5s ease;
+        }
+        .table-wrap {
+            overflow-x: auto; border-radius: 12px;
+            border: 1px solid var(--border-color); transition: border-color 0.5s ease;
+        }
+        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .data-table th {
+            text-align: left; padding: 14px 18px; font-size: 10px; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px; color: var(--text-dim);
+            background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);
+            white-space: nowrap; transition: all 0.5s ease;
+        }
+        .data-table td {
+            padding: 14px 18px; color: var(--text-secondary);
+            border-bottom: 1px solid rgba(255,255,255,0.03);
+            transition: all 0.2s ease; white-space: nowrap;
+        }
+        .data-table tbody tr { transition: all 0.2s ease; }
+        .data-table tbody tr:hover td { background: var(--bg-secondary); color: var(--text-primary); }
+        .data-table tbody tr:last-child td { border-bottom: none; }
+        .user-cell { display: flex; align-items: center; gap: 10px; }
+        .user-cell img {
+            width: 32px; height: 32px; border-radius: 8px;
+            border: 1px solid var(--border-color); object-fit: cover;
+        }
+        .user-cell .user-name { font-weight: 500; color: var(--text-primary); transition: color 0.5s ease; }
+        .user-cell .user-email {
+            font-size: 11px; font-family: var(--font-mono);
+            color: var(--text-muted); transition: color 0.5s ease;
+        }
+        .status {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 12px; border-radius: 100px; font-size: 11px; font-weight: 600;
+        }
+        .status-online {
+            background: var(--bg-glass); border: 1px solid var(--border-color); color: var(--success);
+        }
+        .status-online::before {
+            content: ''; width: 5px; height: 5px; border-radius: 50%;
+            background: var(--success); animation: statusPulse 2s infinite;
+        }
+        .status-offline {
+            background: var(--bg-input); border: 1px solid var(--border-color); color: var(--text-muted);
+        }
+        .status-offline::before {
+            content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim);
+        }
+        .status-pending {
+            background: var(--bg-hover); border: 1px solid var(--border-color); color: var(--warning);
+        }
+        .status-pending::before {
+            content: ''; width: 5px; height: 5px; border-radius: 50%;
+            background: var(--warning); animation: statusPulse 2s infinite;
+        }
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-glow-soft); }
+            50% { opacity: 0.6; box-shadow: 0 0 0 4px rgba(99,102,241,0); }
+        }
+        .action-btn {
+            width: 28px; height: 28px; border-radius: 7px;
+            background: var(--bg-hover); border: 1px solid var(--border-color);
+            color: var(--text-muted); cursor: pointer;
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease; font-size: 11px; margin-right: 4px;
+        }
+        .action-btn:hover {
+            background: var(--bg-glass); border-color: var(--border-hover); color: var(--text-primary);
+        }
+        .action-btn.danger:hover {
+            background: var(--error-soft); border-color: var(--error); color: var(--error);
+        }
+        .code-form { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+        .code-form input {
+            padding: 12px 16px; background: var(--bg-input);
+            border: 1px solid var(--border-color); border-radius: 10px;
+            color: var(--text-primary); font-size: 13px;
+            font-family: var(--font-body); outline: none; transition: all 0.3s ease;
+        }
+        .code-form input:focus {
+            border-color: var(--border-hover); background: var(--bg-hover);
+            box-shadow: 0 0 0 3px var(--accent-glow-soft);
+        }
+        .code-form input::placeholder { color: var(--text-dim); }
+        .code-form input.code-main { flex: 1; min-width: 200px; font-family: var(--font-mono); color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+        .code-form input.code-num { width: 100px; }
+        .btn {
+            padding: 12px 20px; border-radius: 10px; font-size: 13px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s ease; border: none;
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 8px; position: relative; overflow: hidden; font-family: var(--font-body);
+        }
+        .btn-primary {
+            background: var(--accent); color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow-soft);
+        }
+        .btn-primary:hover {
+            background: var(--accent-light); transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--accent-glow);
+        }
+        .btn-secondary {
+            background: var(--bg-hover); color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background: var(--bg-glass); border-color: var(--border-hover); color: var(--text-primary);
+        }
+        .empty-state { text-align: center; padding: 48px 20px; color: var(--text-dim); }
+        .empty-state i { font-size: 32px; margin-bottom: 12px; display: block; }
+        .empty-state p { font-size: 13px; }
+        .broadcast-composer {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px;
+        }
+        .composer-section { display: flex; flex-direction: column; gap: 16px; }
+        .composer-section label {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 2px;
+            color: var(--text-muted); font-weight: 600; transition: color 0.5s ease;
+        }
+        .broadcast-input {
+            padding: 14px 18px; background: var(--bg-input);
+            border: 1px solid var(--border-color); border-radius: 12px;
+            color: var(--text-primary); font-size: 14px;
+            font-family: var(--font-body); outline: none;
+            transition: all 0.3s ease; width: 100%;
+        }
+        .broadcast-input:focus {
+            border-color: var(--border-hover); background: var(--bg-hover);
+            box-shadow: 0 0 0 3px var(--accent-glow-soft);
+        }
+        .broadcast-input::placeholder { color: var(--text-dim); }
+        .broadcast-textarea { min-height: 160px; resize: vertical; line-height: 1.6; }
+        .broadcast-select {
+            padding: 12px 16px; background: var(--bg-input);
+            border: 1px solid var(--border-color); border-radius: 10px;
+            color: var(--text-primary); font-size: 13px;
+            font-family: var(--font-body); outline: none; cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 14px center;
+            padding-right: 40px; transition: all 0.3s ease;
+        }
+        [data-theme="light"] .broadcast-select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(0,0,0,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        }
+        .broadcast-select:focus { border-color: var(--border-hover); box-shadow: 0 0 0 3px var(--accent-glow-soft); }
+        .broadcast-select option { background: var(--bg-primary); color: var(--text-primary); }
+        .broadcast-preview-card {
+            background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 24px; min-height: 200px;
+            display: flex; flex-direction: column; gap: 12px;
+            transition: all 0.5s ease;
+        }
+        .preview-header {
+            display: flex; align-items: center; gap: 10px;
+            padding-bottom: 16px; border-bottom: 1px solid var(--border-color);
+            transition: border-color 0.5s ease;
+        }
+        .preview-avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent-glow-soft), rgba(255,255,255,0.02));
+            border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display); font-size: 14px; font-weight: 700;
+            color: var(--accent); transition: all 0.5s ease;
+        }
+        .preview-meta { display: flex; flex-direction: column; }
+        .preview-from {
+            font-size: 13px; font-weight: 600; color: var(--text-primary);
+            transition: color 0.5s ease;
+        }
+        .preview-time { font-size: 11px; color: var(--text-dim); transition: color 0.5s ease; }
+        .preview-badge {
+            margin-left: auto; padding: 4px 10px;
+            background: var(--bg-glass); border: 1px solid var(--border-color);
+            border-radius: 100px; font-size: 10px; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--text-muted); transition: all 0.5s ease;
+        }
+        .preview-title {
+            font-family: var(--font-display); font-size: 15px; font-weight: 700;
+            color: var(--text-primary); letter-spacing: 0.5px; transition: color 0.5s ease;
+        }
+        .preview-body {
+            font-size: 13px; line-height: 1.7; color: var(--text-secondary);
+            white-space: pre-wrap; transition: color 0.5s ease;
+        }
+        .preview-body.placeholder { color: var(--text-dim); font-style: italic; }
+        .broadcast-actions { display: flex; gap: 12px; margin-top: 8px; }
+        .broadcast-actions .btn { padding: 14px 28px; font-size: 14px; }
+        .broadcast-actions .btn-primary {
+            background: var(--accent); color: #fff; font-weight: 700;
+            box-shadow: 0 0 20px var(--accent-glow-soft);
+        }
+        .broadcast-actions .btn-primary:hover {
+            background: var(--accent-light); box-shadow: 0 8px 30px var(--accent-glow);
+        }
+        .broadcast-actions .btn-primary:disabled {
+            opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none;
+        }
+        .broadcast-actions .btn-secondary { padding: 14px 24px; }
+        .char-count { font-size: 11px; color: var(--text-dim); text-align: right; margin-top: 4px; transition: color 0.5s ease; }
+        .char-count.warning { color: var(--warning); }
+        .char-count.danger { color: var(--error); }
+        .broadcast-item {
+            display: flex; align-items: flex-start; gap: 16px;
+            padding: 20px; background: var(--bg-card);
+            border: 1px solid var(--border-color); border-radius: 14px;
+            margin-bottom: 12px; transition: all 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+        .broadcast-item::before {
+            content: ''; position: absolute; inset: 0; border-radius: 14px; padding: 1px;
+            background: linear-gradient(160deg, var(--border-hover) 0%, transparent 40%, transparent 60%, var(--accent-glow-soft) 100%);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor; mask-composite: exclude;
+            pointer-events: none; opacity: 0; transition: opacity 0.3s;
+        }
+        .broadcast-item:hover::before { opacity: 1; }
+        .broadcast-item:hover {
+            background: var(--bg-glass); border-color: var(--border-hover);
+            transform: translateY(-2px); box-shadow: 0 10px 30px var(--shadow-color);
+        }
+        .broadcast-item-icon {
+            width: 40px; height: 40px; border-radius: 12px;
+            background: var(--bg-glass); border: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; color: var(--accent); transition: all 0.3s ease;
+        }
+        .broadcast-item:hover .broadcast-item-icon {
+            background: var(--accent-glow-soft); border-color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow-soft);
+        }
+        .broadcast-item-content { flex: 1; min-width: 0; }
+        .broadcast-item-title {
+            font-size: 14px; font-weight: 600; color: var(--text-primary);
+            margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            transition: color 0.5s ease;
+        }
+        .broadcast-item-body {
+            font-size: 12px; color: var(--text-muted); line-height: 1.5;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; margin-bottom: 8px; transition: color 0.5s ease;
+        }
+        .broadcast-item-meta {
+            display: flex; align-items: center; gap: 12px;
+            font-size: 11px; color: var(--text-dim); transition: color 0.5s ease;
+        }
+        .broadcast-item-meta span { display: flex; align-items: center; gap: 4px; }
+        .broadcast-item-actions { display: flex; gap: 6px; flex-shrink: 0; }
+        .toast-container {
+            position: fixed; top: 88px; right: 32px; z-index: 1000;
+            display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+        }
+        .toast {
+            background: var(--modal-bg); border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 16px 20px;
+            display: flex; align-items: center; gap: 12px;
+            backdrop-filter: blur(24px);
+            transform: translateX(120%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: all; max-width: 380px;
+            box-shadow: 0 20px 60px var(--shadow-color);
+        }
+        .toast.show { transform: translateX(0); }
+        .toast-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .toast-icon.success { background: var(--success-soft); color: var(--success); }
+        .toast-icon.error { background: var(--error-soft); color: var(--error); }
+        .toast-content { flex: 1; }
+        .toast-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; transition: color 0.5s ease; }
+        .toast-message { font-size: 12px; color: var(--text-muted); transition: color 0.5s ease; }
+        .toast-close { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; transition: color 0.2s; }
+        .toast-close:hover { color: var(--text-primary); }
+        @media (max-width: 1024px) {
+            .nav-links { display: none; }
+            .main-content { padding: 92px 20px 40px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .tabs { overflow-x: auto; width: 100%; }
+            .broadcast-composer { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .navbar { padding: 0 16px; height: 60px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+            .code-form { flex-direction: column; }
+            .code-form input.code-num { width: 100%; }
+            .broadcast-actions { flex-direction: column; }
+            .broadcast-actions .btn { width: 100%; }
+            .toast-container { right: 16px; left: 16px; }
+            .toast { max-width: 100%; }
+        }
+        ::-webkit-scrollbar { width: 6px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <canvas id="network-canvas"></canvas>
+    <div class="grid-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="noise"></div>
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <nav class="navbar">
+        <a href="dashboard.html" class="nav-brand">
+            <div class="logo-icon">A</div>
+            <span class="brand-text">Amzy Host</span>
+        </a>
+        <div class="nav-links">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="admin.html" class="active"><i class="fas fa-shield-alt"></i> Admin</a>
+        </div>
+        <div class="nav-right">
+            <div class="admin-badge">
+                <i class="fas fa-shield-alt"></i>
+                <span>Admin</span>
+            </div>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle theme">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="user-menu">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff&size=128" alt="" id="user-avatar" class="avatar">
+                <div class="dropdown">
+                    <a href="settings.html"><i class="fas fa-cog"></i> Settings</a>
+                    <a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div>
+                <h1 class="page-title">Admin Panel</h1>
+            </div>
+            <div class="live-indicator">
+                <div class="live-dot"></div>
+                <span>Live Data</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-users"></i></div>
+                <div class="stat-info">
+                    <h3 id="admin-users">0</h3>
+                    <p>Total Users</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-robot"></i></div>
+                <div class="stat-info">
+                    <h3 id="admin-bots">0</h3>
+                    <p>Active Bots</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                <div class="stat-info">
+                    <h3 id="admin-coins">0</h3>
+                    <p>Total Coins</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-money-bill-wave"></i></div>
+                <div class="stat-info">
+                    <h3 id="admin-revenue">&#x20A6;0</h3>
+                    <p>Revenue</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('users', this)">
+                <i class="fas fa-users"></i> Users
+            </button>
+            <button class="tab-btn" onclick="switchTab('codes', this)">
+                <i class="fas fa-ticket-alt"></i> Redeem Codes
+            </button>
+            <button class="tab-btn" onclick="switchTab('payments', this)">
+                <i class="fas fa-money-bill"></i> Payments
+            </button>
+            <button class="tab-btn" onclick="switchTab('bots', this)">
+                <i class="fas fa-robot"></i> All Bots
+            </button>
+            <button class="tab-btn" onclick="switchTab('broadcast', this)">
+                <i class="fas fa-broadcast-tower"></i> Broadcast
+            </button>
+        </div>
+
+        <div class="tab-content" id="tab-users">
+            <div class="card">
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>User</th><th>Email</th><th>Coins</th><th>Bots</th><th>Joined</th></tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <tr><td colspan="5" class="empty-state"><i class="fas fa-users"></i><p>No users found</p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="tab-codes">
+            <div class="card">
+                <h3>Create Redeem Code</h3>
+                <div class="code-form">
+                    <input type="text" id="code-input" placeholder="AMZY2024" class="code-main" maxlength="20">
+                    <input type="number" id="code-coins" placeholder="Coins" min="1" value="10" class="code-num">
+                    <input type="number" id="code-uses" placeholder="Uses" min="1" value="1" class="code-num">
+                    <button class="btn btn-primary" onclick="createRedeemCode()">
+                        <i class="fas fa-plus"></i> Create
+                    </button>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Code</th><th>Coins</th><th>Uses</th><th>Used</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="codes-table-body">
+                            <tr><td colspan="6" class="empty-state"><i class="fas fa-ticket-alt"></i><p>No codes created</p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="tab-payments">
+            <div class="card">
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>User</th><th>Package</th><th>Amount</th><th>Status</th><th>Date</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="payments-table-body">
+                            <tr><td colspan="6" class="empty-state"><i class="fas fa-money-bill"></i><p>No payments yet</p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="tab-bots">
+            <div class="card">
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>Bot</th><th>Owner</th><th>Language</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody id="bots-table-body">
+                            <tr><td colspan="6" class="empty-state"><i class="fas fa-robot"></i><p>No bots deployed</p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content hidden" id="tab-broadcast">
+            <div class="card">
+                <h3><i class="fas fa-paper-plane" style="margin-right:8px;"></i>Compose Broadcast</h3>
+                <div class="broadcast-composer">
+                    <div class="composer-section">
+                        <label>Broadcast Title</label>
+                        <input type="text" id="broadcast-title" class="broadcast-input" placeholder="Enter announcement title..." maxlength="100">
+                        <label>Message</label>
+                        <textarea id="broadcast-body" class="broadcast-input broadcast-textarea" placeholder="Type your broadcast message here... Users will see this in their notifications." maxlength="2000"></textarea>
+                        <div class="char-count" id="char-count">0 / 2000</div>
+                        <label>Priority</label>
+                        <select id="broadcast-priority" class="broadcast-select">
+                            <option value="normal">Normal</option>
+                            <option value="high">High Priority</option>
+                            <option value="low">Low Priority</option>
+                        </select>
+                        <div class="broadcast-actions">
+                            <button class="btn btn-primary" id="send-btn" onclick="sendBroadcast()">
+                                <i class="fas fa-paper-plane"></i> Send to All Users
+                            </button>
+                            <button class="btn btn-secondary" onclick="clearBroadcast()">
+                                <i class="fas fa-eraser"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div class="composer-section">
+                        <label>Live Preview</label>
+                        <div class="broadcast-preview-card">
+                            <div class="preview-header">
+                                <div class="preview-avatar">A</div>
+                                <div class="preview-meta">
+                                    <span class="preview-from">Amzy Host</span>
+                                    <span class="preview-time">Just now</span>
+                                </div>
+                                <span class="preview-badge" id="preview-badge">Normal</span>
+                            </div>
+                            <div class="preview-title" id="preview-title">Your title will appear here</div>
+                            <div class="preview-body placeholder" id="preview-body">Your broadcast message will appear here in real-time as you type...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 24px;">
+                <h3><i class="fas fa-history" style="margin-right:8px;"></i>Broadcast History</h3>
+                <div id="broadcast-history">
+                    <div class="empty-state">
+                        <i class="fas fa-broadcast-tower"></i>
+                        <p>No broadcasts sent yet</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<script>
+    const API_URL = window.location.origin;
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('amzy-theme');
+        const savedMode = localStorage.getItem('amzy-theme-mode') || 'manual';
+        if (savedMode === 'system') {
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+        } else if (savedTheme) {
+            html.setAttribute('data-theme', savedTheme);
+        } else {
+            html.setAttribute('data-theme', 'dark');
+        }
+        updateThemeIcon();
+    }
+    function updateThemeIcon() {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        themeIcon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+    }
+    function toggleTheme() {
+        const current = html.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('amzy-theme', next);
+        localStorage.setItem('amzy-theme-mode', 'manual');
+        updateThemeIcon();
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (localStorage.getItem('amzy-theme-mode') === 'system') {
+            html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
+            updateThemeIcon();
+        }
+    });
+    initTheme();
+
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: null, y: null };
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.4;
+            this.vy = (Math.random() - 0.5) * 0.4;
+            this.size = Math.random() * 1.5 + 0.5;
+        }
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            if (mouse.x != null) {
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    const force = (120 - dist) / 120;
+                    this.vx -= (dx / dist) * force * 0.3;
+                    this.vy -= (dy / dist) * force * 0.3;
+                }
+            }
+        }
+        draw() {
+            const isDark = html.getAttribute('data-theme') === 'dark';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = isDark ? `rgba(99, 102, 241, ${this.size * 0.2})` : `rgba(79, 70, 229, ${this.size * 0.15})`;
+            ctx.fill();
+        }
+    }
+    function initParticles() {
+        particles = [];
+        const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 20000));
+        for (let i = 0; i < count; i++) particles.push(new Particle());
+    }
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        particles.forEach(p => { p.update(); p.draw(); });
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = isDark ? `rgba(99, 102, 241, ${0.06 * (1 - dist / 100)})` : `rgba(79, 70, 229, ${0.04 * (1 - dist / 100)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+        requestAnimationFrame(animateParticles);
+    }
+    resizeCanvas();
+    initParticles();
+    animateParticles();
+    window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+    function switchTab(tab, btn) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${tab}`).classList.remove('hidden');
+    }
+
+    let redeemCodes = JSON.parse(localStorage.getItem('amzy-codes') || '[]');
+    function createRedeemCode() {
+        const code = document.getElementById('code-input').value.trim().toUpperCase();
+        const coins = parseInt(document.getElementById('code-coins').value) || 10;
+        const uses = parseInt(document.getElementById('code-uses').value) || 1;
+        if (!code) { shake(document.getElementById('code-input')); return; }
+        redeemCodes.push({ code, coins, maxUses: uses, used: 0, created: new Date().toISOString(), active: true });
+        localStorage.setItem('amzy-codes', JSON.stringify(redeemCodes));
+        document.getElementById('code-input').value = '';
+        renderCodes();
+    }
+    function deleteCode(index) {
+        redeemCodes.splice(index, 1);
+        localStorage.setItem('amzy-codes', JSON.stringify(redeemCodes));
+        renderCodes();
+    }
+    function toggleCode(index) {
+        redeemCodes[index].active = !redeemCodes[index].active;
+        localStorage.setItem('amzy-codes', JSON.stringify(redeemCodes));
+        renderCodes();
+    }
+    function renderCodes() {
+        const tbody = document.getElementById('codes-table-body');
+        if (redeemCodes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-ticket-alt"></i><p>No codes created</p></td></tr>';
+            return;
+        }
+        tbody.innerHTML = redeemCodes.map((c, i) => `
+            <tr>
+                <td><code style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1px;background:var(--bg-glass);padding:4px 10px;border-radius:6px;color:var(--accent);">${c.code}</code></td>
+                <td>${c.coins}</td>
+                <td>${c.maxUses}</td>
+                <td>${c.used}</td>
+                <td><span class="status ${c.active ? 'status-online' : 'status-offline'}">${c.active ? 'Active' : 'Inactive'}</span></td>
+                <td>
+                    <button class="action-btn" onclick="toggleCode(${i})" title="Toggle"><i class="fas fa-power-off"></i></button>
+                    <button class="action-btn danger" onclick="deleteCode(${i})" title="Delete"><i class="fas fa-trash"></i></button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function loadAdminData() {
+        const users = JSON.parse(localStorage.getItem('amzy-users') || '[]');
+        const bots = JSON.parse(localStorage.getItem('amzy-bots') || '[]');
+        const totalCoins = users.reduce((sum, u) => sum + (u.coins || 0), 0);
+        const revenue = parseInt(localStorage.getItem('amzy-revenue') || '0');
+        animateNum('admin-users', users.length);
+        animateNum('admin-bots', bots.filter(b => b.active).length);
+        animateNum('admin-coins', totalCoins);
+        document.getElementById('admin-revenue').textContent = '₦' + revenue.toLocaleString();
+        const uBody = document.getElementById('users-table-body');
+        if (users.length === 0) {
+            uBody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="fas fa-users"></i><p>No users found</p></td></tr>';
+        } else {
+            uBody.innerHTML = users.map(u => `
+                <tr>
+                    <td>
+                        <div class="user-cell">
+                            <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || 'User')}&background=6366f1&color=fff&size=64" alt="">
+                            <div>
+                                <div class="user-name">${u.name || 'User'}</div>
+                                <div class="user-email">${u.email || '-'}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;">${u.email || '-'}</td>
+                    <td>${u.coins || 0}</td>
+                    <td>${u.bots || 0}</td>
+                    <td style="font-size:12px;color:var(--text-muted);">${u.joined ? new Date(u.joined).toLocaleDateString() : '-'}</td>
+                </tr>
+            `).join('');
+        }
+        const bBody = document.getElementById('bots-table-body');
+        if (bots.length === 0) {
+            bBody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-robot"></i><p>No bots deployed</p></td></tr>';
+        } else {
+            bBody.innerHTML = bots.map((b, i) => `
+                <tr>
+                    <td><strong style="color:var(--text-primary);font-size:13px;">${b.name}</strong></td>
+                    <td>${b.owner || '-'}</td>
+                    <td style="font-family:'JetBrains Mono',monospace;font-size:12px;text-transform:uppercase;">${b.language || 'nodejs'}</td>
+                    <td><span class="status ${b.active ? 'status-online' : 'status-offline'}">${b.active ? 'Running' : 'Stopped'}</span></td>
+                    <td style="font-size:12px;color:var(--text-muted);">${b.created ? new Date(b.created).toLocaleDateString() : '-'}</td>
+                    <td>
+                        <button class="action-btn" onclick="toggleBot(${i})" title="Toggle"><i class="fas fa-power-off"></i></button>
+                        <button class="action-btn danger" onclick="deleteBot(${i})" title="Delete"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        const payments = JSON.parse(localStorage.getItem('amzy-payments') || '[]');
+        const pBody = document.getElementById('payments-table-body');
+        if (payments.length === 0) {
+            pBody.innerHTML = '<tr><td colspan="6" class="empty-state"><i class="fas fa-money-bill"></i><p>No payments yet</p></td></tr>';
+        } else {
+            pBody.innerHTML = payments.map(p => `
+                <tr>
+                    <td>${p.user || '-'}</td>
+                    <td>${p.package || '-'}</td>
+                    <td style="font-family:'Orbitron',monospace; color: var(--text-primary);">₦${(p.amount || 0).toLocaleString()}</td>
+                    <td><span class="status status-${p.status || 'pending'}">${p.status || 'Pending'}</span></td>
+                    <td style="font-size:12px;color:var(--text-muted);">${p.date ? new Date(p.date).toLocaleDateString() : '-'}</td>
+                    <td>
+                        <button class="action-btn" onclick="approvePayment('${p.id}')" title="Approve"><i class="fas fa-check"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        renderCodes();
+    }
+    function animateNum(id, target) {
+        const el = document.getElementById(id);
+        let current = 0;
+        const inc = target / 25;
+        const timer = setInterval(() => {
+            current += inc;
+            if (current >= target) { current = target; clearInterval(timer); }
+            el.textContent = Math.floor(current).toLocaleString();
+        }, 40);
+    }
+    function toggleBot(i) {
+        const bots = JSON.parse(localStorage.getItem('amzy-bots') || '[]');
+        if (bots[i]) { bots[i].active = !bots[i].active; localStorage.setItem('amzy-bots', JSON.stringify(bots)); loadAdminData(); }
+    }
+    function deleteBot(i) {
+        const bots = JSON.parse(localStorage.getItem('amzy-bots') || '[]');
+        bots.splice(i, 1); localStorage.setItem('amzy-bots', JSON.stringify(bots));
+        loadAdminData();
+    }
+    function approvePayment(id) {
+        const payments = JSON.parse(localStorage.getItem('amzy-payments') || '[]');
+        const p = payments.find(x => x.id === id);
+        if (p) { p.status = 'completed'; localStorage.setItem('amzy-payments', JSON.stringify(payments)); loadAdminData(); }
+    }
+
+    function logout() {
+        localStorage.removeItem('amzy-token');
+        localStorage.removeItem('amzy-user');
+        window.location.href = 'login.html';
+    }
+
+    const user = JSON.parse(localStorage.getItem('amzy-user') || '{}');
+    if (!user.isAdmin) window.location.href = 'dashboard.html';
+
+    if (!localStorage.getItem('amzy-users')) {
+        localStorage.setItem('amzy-users', JSON.stringify([
+            { name: 'John Doe', email: 'john@example.com', coins: 25, bots: 2, joined: '2024-01-15' },
+            { name: 'Jane Smith', email: 'jane@example.com', coins: 10, bots: 1, joined: '2024-02-20' },
+            { name: 'Mike Johnson', email: 'mike@example.com', coins: 60, bots: 3, joined: '2024-03-10' }
+        ]));
+    }
+    if (!localStorage.getItem('amzy-bots')) {
+        localStorage.setItem('amzy-bots', JSON.stringify([
+            { name: 'WeatherBot', owner: 'John Doe', language: 'nodejs', active: true, created: '2024-04-01' },
+            { name: 'GameBot', owner: 'Jane Smith', language: 'python', active: true, created: '2024-04-05' },
+            { name: 'NewsBot', owner: 'Mike Johnson', language: 'nodejs', active: false, created: '2024-04-10' }
+        ]));
+    }
+    if (!localStorage.getItem('amzy-revenue')) localStorage.setItem('amzy-revenue', '8500');
+
+    loadAdminData();
+
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const nav = document.querySelector('.navbar');
+        const y = window.scrollY;
+        if (y > lastScroll && y > 80) nav.style.transform = 'translateY(-100%)';
+        else nav.style.transform = 'translateY(0)';
+        lastScroll = y;
+    });
+
+    function shake(el) {
+        el.style.animation = 'none'; el.offsetHeight;
+        el.style.animation = 'shake 0.5s ease';
+        setTimeout(() => el.style.animation = '', 500);
+    }
+    const shakeStyle = document.createElement('style');
+    shakeStyle.textContent = `
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            15% { transform: translateX(-6px); }
+            30% { transform: translateX(6px); }
+            45% { transform: translateX(-4px); }
+            60% { transform: translateX(4px); }
+            75% { transform: translateX(-2px); }
+            90% { transform: translateX(2px); }
+        }
+    `;
+    document.head.appendChild(shakeStyle);
+
+    const titleInput = document.getElementById('broadcast-title');
+    const bodyInput = document.getElementById('broadcast-body');
+    const prioritySelect = document.getElementById('broadcast-priority');
+    const previewTitle = document.getElementById('preview-title');
+    const previewBody = document.getElementById('preview-body');
+    const previewBadge = document.getElementById('preview-badge');
+    const charCount = document.getElementById('char-count');
+    const sendBtn = document.getElementById('send-btn');
+
+    function updatePreview() {
+        const title = titleInput.value.trim();
+        const body = bodyInput.value.trim();
+        const priority = prioritySelect.value;
+        previewTitle.textContent = title || 'Your title will appear here';
+        previewTitle.style.opacity = title ? '1' : '0.5';
+        if (body) {
+            previewBody.textContent = body;
+            previewBody.classList.remove('placeholder');
+        } else {
+            previewBody.textContent = 'Your broadcast message will appear here in real-time as you type...';
+            previewBody.classList.add('placeholder');
+        }
+        const badgeMap = { normal: 'Normal', high: 'High Priority', low: 'Low Priority' };
+        previewBadge.textContent = badgeMap[priority] || 'Normal';
+        const len = bodyInput.value.length;
+        charCount.textContent = len + ' / 2000';
+        charCount.className = 'char-count' + (len > 1800 ? ' danger' : len > 1500 ? ' warning' : '');
+    }
+    if (titleInput) titleInput.addEventListener('input', updatePreview);
+    if (bodyInput) bodyInput.addEventListener('input', updatePreview);
+    if (prioritySelect) prioritySelect.addEventListener('change', updatePreview);
+
+    function sendBroadcast() {
+        const title = titleInput.value.trim();
+        const body = bodyInput.value.trim();
+        const priority = prioritySelect.value;
+        if (!title || !body) {
+            showToast('Error', 'Please fill in both title and message.', 'error');
+            if (!title) shake(titleInput);
+            if (!body) shake(bodyInput);
+            return;
+        }
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        setTimeout(() => {
+            const broadcasts = JSON.parse(localStorage.getItem('amzy-broadcasts') || '[]');
+            const broadcast = {
+                id: 'bc_' + Date.now(),
+                title, body, priority,
+                sentAt: new Date().toISOString(),
+                recipientCount: JSON.parse(localStorage.getItem('amzy-users') || '[]').length,
+                status: 'sent'
+            };
+            broadcasts.unshift(broadcast);
+            localStorage.setItem('amzy-broadcasts', JSON.stringify(broadcasts));
+            const notifications = JSON.parse(localStorage.getItem('amzy-notifications') || '[]');
+            notifications.unshift({
+                id: 'notif_' + Date.now(),
+                title, body, priority,
+                read: false,
+                createdAt: broadcast.sentAt,
+                type: 'broadcast'
+            });
+            localStorage.setItem('amzy-notifications', JSON.stringify(notifications));
+            renderBroadcastHistory();
+            clearBroadcast();
+            showToast('Broadcast Sent', 'Message sent to ' + broadcast.recipientCount + ' user(s) successfully.', 'success');
+            sendBtn.disabled = false;
+            sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send to All Users';
+        }, 800);
+    }
+    function clearBroadcast() {
+        titleInput.value = '';
+        bodyInput.value = '';
+        prioritySelect.value = 'normal';
+        updatePreview();
+    }
+    function deleteBroadcast(id) {
+        let broadcasts = JSON.parse(localStorage.getItem('amzy-broadcasts') || '[]');
+        broadcasts = broadcasts.filter(b => b.id !== id);
+        localStorage.setItem('amzy-broadcasts', JSON.stringify(broadcasts));
+        renderBroadcastHistory();
+        showToast('Deleted', 'Broadcast removed from history.', 'success');
+    }
+    function renderBroadcastHistory() {
+        const container = document.getElementById('broadcast-history');
+        const broadcasts = JSON.parse(localStorage.getItem('amzy-broadcasts') || '[]');
+        if (broadcasts.length === 0) {
+            container.innerHTML = '<div class="empty-state"><i class="fas fa-broadcast-tower"></i><p>No broadcasts sent yet</p></div>';
+            return;
+        }
+        container.innerHTML = broadcasts.map(b => {
+            const date = new Date(b.sentAt);
+            const timeStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const priorityIcon = b.priority === 'high' ? 'fa-exclamation-circle' : b.priority === 'low' ? 'fa-arrow-down' : 'fa-bullhorn';
+            return '<div class="broadcast-item">' +
+                '<div class="broadcast-item-icon"><i class="fas ' + priorityIcon + '" style="color: var(--text-muted);"></i></div>' +
+                '<div class="broadcast-item-content">' +
+                    '<div class="broadcast-item-title">' + escapeHtml(b.title) + '</div>' +
+                    '<div class="broadcast-item-body">' + escapeHtml(b.body) + '</div>' +
+                    '<div class="broadcast-item-meta">' +
+                        '<span><i class="fas fa-clock" style="font-size:10px; color: var(--text-muted);"></i> ' + timeStr + '</span>' +
+                        '<span><i class="fas fa-users" style="font-size:10px; color: var(--text-muted);"></i> ' + b.recipientCount + ' recipients</span>' +
+                        '<span><i class="fas fa-tag" style="font-size:10px; color: var(--text-muted);"></i> ' + b.priority + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="broadcast-item-actions">' +
+                    '<button class="action-btn" onclick="resendBroadcast('' + b.id + '')" title="Resend"><i class="fas fa-redo"></i></button>' +
+                    '<button class="action-btn danger" onclick="deleteBroadcast('' + b.id + '')" title="Delete"><i class="fas fa-trash"></i></button>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+    function resendBroadcast(id) {
+        const broadcasts = JSON.parse(localStorage.getItem('amzy-broadcasts') || '[]');
+        const original = broadcasts.find(b => b.id === id);
+        if (!original) return;
+        titleInput.value = original.title;
+        bodyInput.value = original.body;
+        prioritySelect.value = original.priority;
+        updatePreview();
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        document.querySelector('.tab-btn[onclick*="broadcast"]').classList.add('active');
+        document.getElementById('tab-broadcast').classList.remove('hidden');
+        showToast('Loaded', 'Broadcast loaded for resending. Review and click Send.', 'success');
+    }
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    function showToast(title, message, type) {
+        type = type || 'success';
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        const icon = type === 'success' ? 'fa-check' : 'fa-exclamation-triangle';
+        const iconClass = type === 'success' ? 'success' : 'error';
+        toast.innerHTML = '<div class="toast-icon ' + iconClass + '"><i class="fas ' + icon + '"></i></div>' +
+            '<div class="toast-content"><div class="toast-title">' + escapeHtml(title) + '</div>' +
+            '<div class="toast-message">' + escapeHtml(message) + '</div></div>' +
+            '<button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, 5000);
+    }
+    renderBroadcastHistory();
+</script>
+
+</body>
+</html>

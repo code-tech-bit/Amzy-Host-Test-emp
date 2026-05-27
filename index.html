@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amzy Host</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        :root {
+            --font-display: 'Orbitron', monospace;
+            --font-body: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+
+            /* Dark theme — refined indigo accent */
+            --bg-primary: #050508;
+            --bg-secondary: rgba(255,255,255,0.02);
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-glass: rgba(255,255,255,0.04);
+            --bg-input: rgba(255,255,255,0.04);
+            --bg-hover: rgba(255,255,255,0.06);
+
+            --text-primary: #f0f0f5;
+            --text-secondary: rgba(255,255,255,0.55);
+            --text-muted: rgba(255,255,255,0.35);
+            --text-dim: rgba(255,255,255,0.2);
+
+            --border-color: rgba(255,255,255,0.06);
+            --border-hover: rgba(255,255,255,0.12);
+            --border-active: rgba(255,255,255,0.2);
+
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-glow: rgba(99,102,241,0.35);
+            --accent-glow-soft: rgba(99,102,241,0.1);
+
+            --error: #ef4444;
+            --error-soft: rgba(239,68,68,0.1);
+            --success: #10b981;
+            --success-soft: rgba(16,185,129,0.1);
+            --warning: #f59e0b;
+
+            --shadow-color: rgba(0,0,0,0.4);
+            --grid-color: rgba(255,255,255,0.015);
+            --scanline-color: rgba(255,255,255,0.012);
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #f8fafc;
+            --bg-secondary: rgba(0,0,0,0.02);
+            --bg-card: rgba(255,255,255,0.7);
+            --bg-glass: rgba(255,255,255,0.6);
+            --bg-input: rgba(0,0,0,0.03);
+            --bg-hover: rgba(0,0,0,0.04);
+
+            --text-primary: #0f172a;
+            --text-secondary: rgba(15,23,42,0.55);
+            --text-muted: rgba(15,23,42,0.35);
+            --text-dim: rgba(15,23,42,0.2);
+
+            --border-color: rgba(0,0,0,0.06);
+            --border-hover: rgba(0,0,0,0.12);
+            --border-active: rgba(0,0,0,0.2);
+
+            --accent: #4f46e5;
+            --accent-light: #6366f1;
+            --accent-glow: rgba(79,70,229,0.25);
+            --accent-glow-soft: rgba(79,70,229,0.08);
+
+            --shadow-color: rgba(0,0,0,0.08);
+            --grid-color: rgba(0,0,0,0.03);
+            --scanline-color: rgba(0,0,0,0.008);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.5s ease, color 0.5s ease;
+        }
+
+        /* ===== BACKGROUND EFFECTS ===== */
+        #network-canvas {
+            position: fixed; inset: 0; z-index: 0;
+            pointer-events: none;
+        }
+
+        .grid-overlay {
+            position: fixed; inset: 0; z-index: 1;
+            background-image: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
+        }
+
+        .scanlines {
+            position: fixed; inset: 0; z-index: 2;
+            background: linear-gradient(to bottom, transparent 50%, var(--scanline-color) 50%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            animation: scanMove 10s linear infinite;
+        }
+
+        @keyframes scanMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        .vignette {
+            position: fixed; inset: 0; z-index: 3;
+            background: radial-gradient(ellipse at center, transparent 30%, var(--bg-primary) 90%);
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .noise {
+            position: fixed; inset: 0; z-index: 4;
+            opacity: 0.015; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='5' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ===== AMBIENT GLOWS ===== */
+        .ambient-glow {
+            position: fixed; width: 500px; height: 500px;
+            border-radius: 50%; filter: blur(120px);
+            opacity: 0.1; pointer-events: none; z-index: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .ambient-glow-1 {
+            background: var(--accent); top: -200px; right: -100px;
+            animation: floatGlow 8s ease-in-out infinite;
+        }
+
+        .ambient-glow-2 {
+            background: var(--accent-light); bottom: -300px; left: -100px;
+            animation: floatGlow 10s ease-in-out infinite reverse;
+        }
+
+        @keyframes floatGlow {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        /* ===== THEME TOGGLE ===== */
+        .theme-toggle {
+            position: fixed; top: 24px; right: 24px; z-index: 100;
+            width: 44px; height: 44px; border-radius: 12px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s ease, background 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            transform: rotate(15deg) scale(1.1);
+            border-color: var(--border-hover);
+        }
+
+        /* ===== MAIN CONTAINER ===== */
+        .intro-container {
+            position: relative; z-index: 10;
+            text-align: center;
+            padding: 40px;
+        }
+
+        /* Logo */
+        .logo-box {
+            width: 120px; height: 120px;
+            border: 2px solid var(--accent);
+            border-radius: 30px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-display);
+            font-size: 56px; font-weight: 900;
+            color: var(--accent);
+            margin: 0 auto 40px;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 0 60px var(--accent-glow-soft), inset 0 0 30px var(--accent-glow-soft);
+            transition: border-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        .logo-box::before {
+            content: '';
+            position: absolute; inset: -4px;
+            border-radius: 34px;
+            border: 1px solid var(--border-hover);
+            animation: rotate 8s linear infinite;
+            transition: border-color 0.5s ease;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Title */
+        .title {
+            font-family: var(--font-display);
+            font-size: 64px; font-weight: 900;
+            letter-spacing: 4px; margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: background 0.5s ease;
+        }
+
+        .subtitle {
+            font-size: 18px; color: var(--text-secondary);
+            margin-bottom: 60px;
+            letter-spacing: 8px; text-transform: uppercase;
+            transition: color 0.5s ease;
+        }
+
+        /* Loading bar */
+        .loading-bar {
+            width: 300px; height: 2px;
+            background: var(--bg-secondary);
+            border-radius: 2px;
+            margin: 0 auto 30px;
+            overflow: hidden;
+            position: relative;
+            transition: background 0.5s ease;
+        }
+
+        .loading-progress {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 2px;
+            animation: load 2.5s ease-out forwards;
+            transition: background 0.5s ease;
+        }
+
+        @keyframes load {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+
+        /* Status text */
+        .status {
+            font-family: var(--font-display);
+            font-size: 12px; color: var(--text-muted);
+            letter-spacing: 3px; margin-bottom: 40px;
+            transition: color 0.5s ease;
+        }
+
+        .status span {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* Enter button */
+        .enter-btn {
+            display: inline-flex; align-items: center; gap: 12px;
+            padding: 18px 48px;
+            background: var(--accent);
+            color: #fff;
+            text-decoration: none;
+            font-family: var(--font-display);
+            font-size: 14px; font-weight: 700;
+            letter-spacing: 2px; border-radius: 12px;
+            border: none; cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.5s ease, color 0.5s ease;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.6s ease-out 2.5s forwards;
+            box-shadow: 0 0 30px var(--accent-glow-soft);
+        }
+
+        .enter-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 20px 60px var(--accent-glow);
+            background: var(--accent-light);
+        }
+
+        .enter-btn i {
+            font-size: 16px;
+            transition: transform 0.3s;
+        }
+
+        .enter-btn:hover i {
+            transform: translateX(4px);
+        }
+
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Version tag */
+        .version {
+            position: fixed; bottom: 30px;
+            left: 50%; transform: translateX(-50%);
+            font-size: 11px; color: var(--text-dim);
+            letter-spacing: 2px; z-index: 10;
+            font-family: var(--font-mono);
+            transition: color 0.5s ease;
+        }
+
+        /* ===== AMZY TUTOR CHATBOT ===== */
+        .tutor-widget {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 200;
+            font-family: var(--font-body);
+        }
+
+        .tutor-toggle {
+            width: 56px; height: 56px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tutor-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 30px var(--accent-glow);
+        }
+
+        .tutor-toggle.pulse::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            border: 2px solid var(--accent);
+            animation: tutorPulse 2s ease-out infinite;
+        }
+
+        @keyframes tutorPulse {
+            0% { transform: scale(1); opacity: 0.6; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .tutor-badge {
+            position: absolute;
+            top: -4px; right: -4px;
+            width: 18px; height: 18px;
+            background: var(--error);
+            border-radius: 50%;
+            font-size: 10px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: badgeBounce 2s ease-in-out infinite;
+        }
+
+        @keyframes badgeBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-3px); }
+        }
+
+        .tutor-chat {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            width: 360px;
+            max-height: 500px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            pointer-events: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 20px 60px var(--shadow-color);
+            backdrop-filter: blur(20px);
+        }
+
+        .tutor-chat.open {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: all;
+        }
+
+        .tutor-header {
+            padding: 16px 20px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+        }
+
+        .tutor-avatar {
+            width: 40px; height: 40px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .tutor-info h3 {
+            font-family: var(--font-display);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .tutor-info p {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 2px;
+        }
+
+        .tutor-close {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tutor-close:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .tutor-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 320px;
+        }
+
+        .tutor-message {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            animation: msgSlideIn 0.3s ease;
+        }
+
+        @keyframes msgSlideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .tutor-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .msg-avatar {
+            width: 32px; height: 32px;
+            border-radius: 10px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .tutor-message.bot .msg-avatar {
+            background: var(--accent-glow-soft);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+
+        .tutor-message.user .msg-avatar {
+            background: var(--bg-hover);
+            border: 1px solid var(--border-hover);
+            color: var(--text-secondary);
+        }
+
+        .msg-bubble {
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            line-height: 1.6;
+            max-width: 260px;
+            word-wrap: break-word;
+        }
+
+        .tutor-message.bot .msg-bubble {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            border-bottom-left-radius: 4px;
+        }
+
+        .tutor-message.user .msg-bubble {
+            background: var(--accent);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-bubble strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .tutor-message.bot .msg-bubble strong {
+            color: var(--accent-light);
+        }
+
+        .tutor-input-area {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .tutor-input {
+            flex: 1;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 13px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .tutor-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow-soft);
+        }
+
+        .tutor-input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .tutor-send {
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            background: var(--accent);
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .tutor-send:hover {
+            background: var(--accent-light);
+            transform: scale(1.1);
+        }
+
+        .tutor-quick-actions {
+            padding: 8px 16px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .tutor-quick-btn {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-glass);
+            color: var(--text-muted);
+            font-size: 11px;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .tutor-quick-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow-soft);
+        }
+
+        .tutor-typing {
+            display: flex;
+            gap: 4px;
+            padding: 10px 14px;
+            align-items: center;
+        }
+
+        .tutor-typing span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            animation: typingBounce 1.4s ease-in-out infinite;
+        }
+
+        .tutor-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .tutor-typing span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+            .title { font-size: 36px; }
+            .subtitle { font-size: 12px; letter-spacing: 4px; }
+            .logo-box { width: 80px; height: 80px; font-size: 36px; border-radius: 20px; }
+            .theme-toggle { top: 16px; right: 16px; width: 40px; height: 40px; }
+            .tutor-chat { width: calc(100vw - 32px); right: -8px; }
+            .tutor-widget { right: 16px; bottom: 16px; }
+        }
+
+        /* Scrollbar for chat */
+        .tutor-messages::-webkit-scrollbar { width: 4px; }
+        .tutor-messages::-webkit-scrollbar-track { background: transparent; }
+        .tutor-messages::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+    <!-- Background Effects -->
+    <canvas id="network-canvas"></canvas>
+    <div class="grid-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+    <div class="noise"></div>
+    <div class="ambient-glow ambient-glow-1"></div>
+    <div class="ambient-glow ambient-glow-2"></div>
+
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">
+        <i class="fas fa-sun" id="theme-icon"></i>
+    </button>
+
+    <!-- Main Intro -->
+    <div class="intro-container">
+        <div class="logo-box">A</div>
+        <h1 class="title">AMZY HOST</h1>
+        <p class="subtitle">Next-Gen Bot Hosting</p>
+
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+
+        <p class="status">SYSTEM INITIALIZING<span>...</span></p>
+
+        <a href="login.html" class="enter-btn">
+            ENTER PORTAL
+            <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="version">v2.0.1 // BUILD 2026</div>
+
+    <!-- ===== AMZY TUTOR CHATBOT ===== -->
+    <div class="tutor-widget">
+        <button class="tutor-toggle pulse" onclick="toggleTutor()" id="tutor-toggle">
+            <i class="fas fa-robot"></i>
+            <span class="tutor-badge">1</span>
+        </button>
+
+        <div class="tutor-chat" id="tutor-chat">
+            <div class="tutor-header">
+                <div class="tutor-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="tutor-info">
+                    <h3>AMZY TUTOR</h3>
+                    <p>Your guide to Amzy Host</p>
+                </div>
+                <button class="tutor-close" onclick="toggleTutor()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="tutor-messages" id="tutor-messages">
+                <!-- Messages will be inserted here -->
+            </div>
+
+            <div class="tutor-quick-actions" id="tutor-quick-actions">
+                <button class="tutor-quick-btn" onclick="sendQuickMsg('What is Amzy Host?')">What is Amzy Host?</button>
+                <button class="tutor-quick-btn" onclick="sendQuickMsg('How do I login?')">How do I login?</button>
+                <button class="tutor-quick-btn" onclick="sendQuickMsg('What are coins?')">What are coins?</button>
+            </div>
+
+            <div class="tutor-input-area">
+                <input type="text" class="tutor-input" id="tutor-input" placeholder="Ask me anything..." onkeypress="handleTutorKey(event)">
+                <button class="tutor-send" onclick="sendTutorMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== THEME SYSTEM =====
+        const themeBtn = document.getElementById('theme-btn');
+        const themeIcon = document.getElementById('theme-icon');
+        const html = document.documentElement;
+
+        function getInitialTheme() {
+            const saved = localStorage.getItem('amzy-theme');
+            if (saved) return saved;
+            if (window.matchMedia('(prefers-color-scheme: light)').matches) return 'light';
+            return 'dark';
+        }
+
+        function applyTheme(theme) {
+            html.setAttribute('data-theme', theme);
+            localStorage.setItem('amzy-theme', theme);
+
+            if (theme === 'light') {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            } else {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            }
+        }
+
+        function toggleTheme() {
+            const current = html.getAttribute('data-theme') || 'dark';
+            const next = current === 'dark' ? 'light' : 'dark';
+            applyTheme(next);
+        }
+
+        applyTheme(getInitialTheme());
+
+        window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', (e) => {
+            if (!localStorage.getItem('amzy-theme')) {
+                applyTheme(e.matches ? 'light' : 'dark');
+            }
+        });
+
+        // ===== PARTICLE NETWORK =====
+        const canvas = document.getElementById('network-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * 0.4;
+                this.vy = (Math.random() - 0.5) * 0.4;
+                this.size = Math.random() * 1.5 + 0.5;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                if (mouse.x != null) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        const force = (120 - dist) / 120;
+                        this.vx -= (dx / dist) * force * 0.3;
+                        this.vy -= (dy / dist) * force * 0.3;
+                    }
+                }
+            }
+
+            draw() {
+                const isDark = html.getAttribute('data-theme') === 'dark';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = isDark 
+                    ? `rgba(99, 102, 241, ${this.size * 0.2})`
+                    : `rgba(79, 70, 229, ${this.size * 0.15})`;
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 20000));
+            for (let i = 0; i < count; i++) particles.push(new Particle());
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const isDark = html.getAttribute('data-theme') === 'dark';
+
+            particles.forEach(p => { p.update(); p.draw(); });
+
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 100) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = isDark
+                            ? `rgba(99, 102, 241, ${0.06 * (1 - dist / 100)})`
+                            : `rgba(79, 70, 229, ${0.04 * (1 - dist / 100)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        resizeCanvas();
+        initParticles();
+        animateParticles();
+
+        window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+        window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+        // ===== AMZY TUTOR CHATBOT =====
+        const tutorChat = document.getElementById('tutor-chat');
+        const tutorMessages = document.getElementById('tutor-messages');
+        const tutorInput = document.getElementById('tutor-input');
+        const tutorToggle = document.getElementById('tutor-toggle');
+        let tutorOpen = false;
+        let hasInteracted = false;
+
+        const tutorResponses = {
+            'hello': "Hey there! I'm **Amzy Tutor**, your personal guide to Amzy Host. I can help you navigate the platform, explain features, and get you started. What would you like to know?",
+            'hi': "Hey there! I'm **Amzy Tutor**, your personal guide to Amzy Host. I can help you navigate the platform, explain features, and get you started. What would you like to know?",
+            'hey': "Hey there! I'm **Amzy Tutor**, your personal guide to Amzy Host. I can help you navigate the platform, explain features, and get you started. What would you like to know?",
+
+            'what is amzy host': "**Amzy Host** is a next-generation hosting platform for Telegram bots and static websites. We use **Pterodactyl** as our game panel backend, giving you powerful server management tools. You can deploy bots, manage resources, and scale your projects — all from one sleek dashboard.",
+            'what's amzy host': "**Amzy Host** is a next-generation hosting platform for Telegram bots and static websites. We use **Pterodactyl** as our game panel backend, giving you powerful server management tools. You can deploy bots, manage resources, and scale your projects — all from one sleek dashboard.",
+            'amzy host': "**Amzy Host** is a next-generation hosting platform for Telegram bots and static websites. We use **Pterodactyl** as our game panel backend, giving you powerful server management tools. You can deploy bots, manage resources, and scale your projects — all from one sleek dashboard.",
+
+            'how do i login': "Click the **ENTER PORTAL** button to go to the login page. You can sign in using **GitHub OAuth** for quick access, or use your email and password. New users can register directly from the login page.",
+            'login': "Click the **ENTER PORTAL** button to go to the login page. You can sign in using **GitHub OAuth** for quick access, or use your email and password. New users can register directly from the login page.",
+            'sign in': "Click the **ENTER PORTAL** button to go to the login page. You can sign in using **GitHub OAuth** for quick access, or use your email and password. New users can register directly from the login page.",
+
+            'what are coins': "**Coins** are Amzy Host's virtual currency. You use them to deploy and manage your bots. Each bot deployment costs a certain amount of coins based on resources. You can purchase coins in Nigerian Naira (₦) through our secure payment system.",
+            'coins': "**Coins** are Amzy Host's virtual currency. You use them to deploy and manage your bots. Each bot deployment costs a certain amount of coins based on resources. You can purchase coins in Nigerian Naira (₦) through our secure payment system.",
+
+            'how do i deploy a bot': "To deploy a bot: 1) Login to your dashboard, 2) Click **'Create Bot'**, 3) Choose your bot type (Node.js, Python, etc.), 4) Upload your code or connect your GitHub repo, 5) Set resource limits, 6) Click **Deploy**. Your bot will be live in seconds!",
+            'deploy': "To deploy a bot: 1) Login to your dashboard, 2) Click **'Create Bot'**, 3) Choose your bot type (Node.js, Python, etc.), 4) Upload your code or connect your GitHub repo, 5) Set resource limits, 6) Click **Deploy**. Your bot will be live in seconds!",
+            'deploy bot': "To deploy a bot: 1) Login to your dashboard, 2) Click **'Create Bot'**, 3) Choose your bot type (Node.js, Python, etc.), 4) Upload your code or connect your GitHub repo, 5) Set resource limits, 6) Click **Deploy**. Your bot will be live in seconds!",
+
+            'features': "Amzy Host offers: **Bot Hosting** for Telegram bots, **Static Site Hosting**, **Pterodactyl Panel** integration, **GitHub OAuth** login, **Coin-based** billing, **Real-time** logs & monitoring, **Auto-scaling**, **SSL** support, and a **Dark/Light** theme system.",
+            'what features': "Amzy Host offers: **Bot Hosting** for Telegram bots, **Static Site Hosting**, **Pterodactyl Panel** integration, **GitHub OAuth** login, **Coin-based** billing, **Real-time** logs & monitoring, **Auto-scaling**, **SSL** support, and a **Dark/Light** theme system.",
+
+            'pricing': "Our pricing is coin-based. You buy coins in Naira (₦) and spend them on bot deployments. Basic bots start at affordable rates. Check the **Pricing** page after logging in for detailed plans and coin packages.",
+            'price': "Our pricing is coin-based. You buy coins in Naira (₦) and spend them on bot deployments. Basic bots start at affordable rates. Check the **Pricing** page after logging in for detailed plans and coin packages.",
+            'how much': "Our pricing is coin-based. You buy coins in Naira (₦) and spend them on bot deployments. Basic bots start at affordable rates. Check the **Pricing** page after logging in for detailed plans and coin packages.",
+
+            'help': "I can help you with: **Getting Started**, **Login/Account**, **Bot Deployment**, **Coins & Payments**, **Features**, **Troubleshooting**, and **Terms & Conditions**. Just ask me anything!",
+            'support': "I can help you with: **Getting Started**, **Login/Account**, **Bot Deployment**, **Coins & Payments**, **Features**, **Troubleshooting**, and **Terms & Conditions**. Just ask me anything!",
+
+            'terms': "Please read our **Terms & Conditions** carefully. Key points: coins are non-refundable, you're responsible for bot content, prohibited activities include spam/phishing, payments are in Naira, and we can terminate violating accounts. You can view the full terms from the login page.",
+            'conditions': "Please read our **Terms & Conditions** carefully. Key points: coins are non-refundable, you're responsible for bot content, prohibited activities include spam/phishing, payments are in Naira, and we can terminate violating accounts. You can view the full terms from the login page.",
+
+            'theme': "You can toggle between **Dark** and **Light** themes using the button in the top-right corner. Your preference is saved automatically. We also support system preference detection!",
+            'dark mode': "You can toggle between **Dark** and **Light** themes using the button in the top-right corner. Your preference is saved automatically. We also support system preference detection!",
+            'light mode': "You can toggle between **Dark** and **Light** themes using the button in the top-right corner. Your preference is saved automatically. We also support system preference detection!",
+
+            'who are you': "I'm **Amzy Tutor** — an AI-powered guide built right into Amzy Host. I'm here to help you learn the platform, answer questions, and make your hosting experience smooth. Think of me as your personal tech assistant!",
+            'who are you?': "I'm **Amzy Tutor** — an AI-powered guide built right into Amzy Host. I'm here to help you learn the platform, answer questions, and make your hosting experience smooth. Think of me as your personal tech assistant!",
+            'what is your name': "I'm **Amzy Tutor** — an AI-powered guide built right into Amzy Host. I'm here to help you learn the platform, answer questions, and make your hosting experience smooth. Think of me as your personal tech assistant!",
+
+            'bye': "Goodbye! Feel free to come back anytime you need help. Happy hosting with Amzy!",
+            'goodbye': "Goodbye! Feel free to come back anytime you need help. Happy hosting with Amzy!",
+            'see you': "Goodbye! Feel free to come back anytime you need help. Happy hosting with Amzy!",
+
+            'thank': "You're welcome! I'm always here to help. Let me know if you need anything else!",
+            'thanks': "You're welcome! I'm always here to help. Let me know if you need anything else!",
+        };
+
+        const fallbackResponses = [
+            "I'm not sure I understand that. Try asking about: **What is Amzy Host?**, **How do I login?**, **What are coins?**, or type **help** for more options.",
+            "Hmm, I don't have info on that yet. I can help with: login, deployment, coins, features, pricing, or terms. What would you like to know?",
+            "That's a great question! I can help you with **getting started**, **bot deployment**, **coins**, or **account** questions. What specifically do you need?"
+        ];
+
+        function toggleTutor() {
+            tutorOpen = !tutorOpen;
+            tutorChat.classList.toggle('open', tutorOpen);
+            tutorToggle.classList.remove('pulse');
+
+            if (tutorOpen && !hasInteracted) {
+                hasInteracted = true;
+                setTimeout(() => {
+                    addBotMessage("Hey there! I'm **Amzy Tutor** — your personal guide to Amzy Host. I can teach you how to use the platform, explain features, and help you get started. What would you like to know?");
+                }, 400);
+            }
+
+            if (tutorOpen) {
+                setTimeout(() => tutorInput.focus(), 300);
+            }
+        }
+
+        function addBotMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'tutor-message bot';
+            div.innerHTML = `
+                <div class="msg-avatar"><i class="fas fa-robot"></i></div>
+                <div class="msg-bubble">${text}</div>
+            `;
+            tutorMessages.appendChild(div);
+            tutorMessages.scrollTop = tutorMessages.scrollHeight;
+        }
+
+        function addUserMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'tutor-message user';
+            div.innerHTML = `
+                <div class="msg-avatar"><i class="fas fa-user"></i></div>
+                <div class="msg-bubble">${text}</div>
+            `;
+            tutorMessages.appendChild(div);
+            tutorMessages.scrollTop = tutorMessages.scrollHeight;
+        }
+
+        function showTyping() {
+            const div = document.createElement('div');
+            div.className = 'tutor-message bot typing-indicator';
+            div.id = 'typing-indicator';
+            div.innerHTML = `
+                <div class="msg-avatar"><i class="fas fa-robot"></i></div>
+                <div class="msg-bubble tutor-typing">
+                    <span></span><span></span><span></span>
+                </div>
+            `;
+            tutorMessages.appendChild(div);
+            tutorMessages.scrollTop = tutorMessages.scrollHeight;
+        }
+
+        function hideTyping() {
+            const el = document.getElementById('typing-indicator');
+            if (el) el.remove();
+        }
+
+        function getResponse(input) {
+            const clean = input.toLowerCase().trim().replace(/[^a-z0-9?\s]/g, '');
+
+            for (const [key, value] of Object.entries(tutorResponses)) {
+                if (clean.includes(key)) return value;
+            }
+
+            return fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+        }
+
+        function sendTutorMessage() {
+            const text = tutorInput.value.trim();
+            if (!text) return;
+
+            addUserMessage(text);
+            tutorInput.value = '';
+
+            showTyping();
+
+            const delay = 800 + Math.random() * 600;
+            setTimeout(() => {
+                hideTyping();
+                addBotMessage(getResponse(text));
+            }, delay);
+        }
+
+        function sendQuickMsg(text) {
+            addUserMessage(text);
+            showTyping();
+
+            const delay = 600 + Math.random() * 400;
+            setTimeout(() => {
+                hideTyping();
+                addBotMessage(getResponse(text));
+            }, delay);
+        }
+
+        function handleTutorKey(e) {
+            if (e.key === 'Enter') sendTutorMessage();
+        }
+
+        // Auto-open tutor after 4 seconds on first visit
+        if (!localStorage.getItem('amzy-tutor-seen')) {
+            setTimeout(() => {
+                if (!tutorOpen) {
+                    toggleTutor();
+                    localStorage.setItem('amzy-tutor-seen', 'true');
+                }
+            }, 4000);
+        }
+    </script>
+</body>
+</html>
