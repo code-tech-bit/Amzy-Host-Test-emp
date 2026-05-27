@@ -11,8 +11,6 @@
         :root {
             --font-display: 'Orbitron', monospace;
             --font-body: 'Inter', sans-serif;
-            
-            /* Dark theme (default) — refined palette */
             --bg-primary: #050508;
             --bg-secondary: rgba(255,255,255,0.02);
             --bg-card: rgba(255,255,255,0.03);
@@ -57,11 +55,7 @@
             --shadow-color: rgba(0,0,0,0.08);
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: var(--font-body);
@@ -72,21 +66,15 @@
             transition: background 0.6s ease, color 0.6s ease;
         }
 
-        /* ===== PARTICLE NETWORK BACKGROUND ===== */
         #network-canvas {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 1;
         }
 
-        /* ===== GRID OVERLAY ===== */
         .grid-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 2;
+            position: fixed; inset: 0; z-index: 2;
             background-image: 
                 linear-gradient(var(--grid-color) 1px, transparent 1px),
                 linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
@@ -96,32 +84,24 @@
             -webkit-mask-image: radial-gradient(circle at center, black 0%, transparent 70%);
         }
 
-        /* ===== SCANLINES ===== */
         .scanlines {
-            position: fixed;
-            inset: 0;
-            z-index: 3;
+            position: fixed; inset: 0; z-index: 3;
             background: linear-gradient(to bottom, transparent 50%, var(--scanline-color) 50%);
             background-size: 100% 4px;
             pointer-events: none;
             opacity: 0.5;
         }
 
-        /* ===== VIGNETTE ===== */
         .vignette {
-            position: fixed;
-            inset: 0;
-            z-index: 4;
+            position: fixed; inset: 0; z-index: 4;
             background: radial-gradient(ellipse at center, transparent 0%, var(--bg-primary) 90%);
             pointer-events: none;
             transition: opacity 0.6s ease;
         }
 
-        /* ===== AMBIENT GLOWS ===== */
         .ambient-glow {
             position: fixed;
-            width: 600px;
-            height: 600px;
+            width: 600px; height: 600px;
             border-radius: 50%;
             filter: blur(100px);
             opacity: 0.15;
@@ -132,17 +112,14 @@
 
         .ambient-glow-1 {
             background: var(--accent);
-            top: -200px;
-            right: -200px;
+            top: -200px; right: -200px;
             animation: floatGlow 8s ease-in-out infinite;
         }
 
         .ambient-glow-2 {
             background: var(--accent-light);
-            bottom: -300px;
-            left: -200px;
-            width: 500px;
-            height: 500px;
+            bottom: -300px; left: -200px;
+            width: 500px; height: 500px;
             animation: floatGlow 10s ease-in-out infinite reverse;
         }
 
@@ -152,14 +129,11 @@
             66% { transform: translate(-20px, 20px) scale(0.9); }
         }
 
-        /* ===== THEME TOGGLE ===== */
         .theme-toggle {
             position: fixed;
-            top: 24px;
-            right: 24px;
+            top: 24px; right: 24px;
             z-index: 1000;
-            width: 44px;
-            height: 44px;
+            width: 44px; height: 44px;
             border-radius: 12px;
             background: var(--bg-glass);
             border: 1px solid var(--border-color);
@@ -182,7 +156,6 @@
             box-shadow: 0 0 30px var(--accent-glow-soft);
         }
 
-        /* ===== MAIN LAYOUT ===== */
         .login-page {
             position: relative;
             z-index: 10;
@@ -196,7 +169,6 @@
             margin: 0 auto;
         }
 
-        /* ===== LEFT SIDE ===== */
         .login-left {
             flex: 1;
             max-width: 560px;
@@ -205,13 +177,10 @@
             justify-content: center;
         }
 
-        .brand-section {
-            margin-bottom: 48px;
-        }
+        .brand-section { margin-bottom: 48px; }
 
         .logo-ring {
-            width: 72px;
-            height: 72px;
+            width: 72px; height: 72px;
             border-radius: 20px;
             background: var(--bg-glass);
             border: 1px solid var(--border-color);
@@ -248,10 +217,7 @@
             opacity: 0.5;
         }
 
-        .glitch-wrapper {
-            position: relative;
-            margin-bottom: 20px;
-        }
+        .glitch-wrapper { position: relative; margin-bottom: 20px; }
 
         .glitch-text {
             font-family: var(--font-display);
@@ -263,14 +229,11 @@
             position: relative;
         }
 
-        .glitch-text::before,
-        .glitch-text::after {
+        .glitch-text::before, .glitch-text::after {
             content: attr(data-text);
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             opacity: 0.8;
         }
 
@@ -324,8 +287,7 @@
 
         .typing-cursor {
             display: inline-block;
-            width: 2px;
-            height: 20px;
+            width: 2px; height: 20px;
             background: var(--accent);
             margin-left: 8px;
             animation: blink 0.8s infinite;
@@ -346,7 +308,6 @@
             max-width: 480px;
         }
 
-        /* Feature Grid — Bento Style */
         .feature-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -369,17 +330,13 @@
         .feature-card::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
             background: linear-gradient(90deg, transparent, var(--accent-glow-soft), transparent);
             transition: left 0.6s;
         }
 
-        .feature-card:hover::before {
-            left: 100%;
-        }
+        .feature-card:hover::before { left: 100%; }
 
         .feature-card:hover {
             border-color: var(--accent);
@@ -395,9 +352,7 @@
             transition: transform 0.3s ease;
         }
 
-        .feature-card:hover i {
-            transform: scale(1.1);
-        }
+        .feature-card:hover i { transform: scale(1.1); }
 
         .feature-card strong {
             display: block;
@@ -414,7 +369,6 @@
             display: block;
         }
 
-        /* Stats Row */
         .stats-row {
             display: flex;
             gap: 40px;
@@ -422,9 +376,7 @@
             border-top: 1px solid var(--border-color);
         }
 
-        .stat-box {
-            position: relative;
-        }
+        .stat-box { position: relative; }
 
         .stat-number {
             font-family: var(--font-display);
@@ -447,7 +399,6 @@
             letter-spacing: 2px;
         }
 
-        /* ===== RIGHT SIDE — GLASS CARD ===== */
         .login-right {
             width: 420px;
             flex-shrink: 0;
@@ -465,15 +416,11 @@
             position: relative;
             transform-style: preserve-3d;
             transition: transform 0.1s ease-out, box-shadow 0.3s ease, border-color 0.3s ease;
-            box-shadow: 
-                0 20px 60px var(--shadow-color),
-                0 0 0 1px rgba(255,255,255,0.02) inset;
+            box-shadow: 0 20px 60px var(--shadow-color), 0 0 0 1px rgba(255,255,255,0.02) inset;
         }
 
         [data-theme="light"] .glass-card {
-            box-shadow: 
-                0 20px 60px var(--shadow-color),
-                0 0 0 1px rgba(0,0,0,0.02) inset;
+            box-shadow: 0 20px 60px var(--shadow-color), 0 0 0 1px rgba(0,0,0,0.02) inset;
         }
 
         .glass-card::before {
@@ -515,10 +462,9 @@
             font-size: 13px;
         }
 
-        /* Input Fields */
         .input-group {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .input-group input {
@@ -540,9 +486,7 @@
             box-shadow: 0 0 0 3px var(--accent-glow-soft), 0 0 20px var(--accent-glow-soft);
         }
 
-        .input-group input::placeholder {
-            color: var(--text-muted);
-        }
+        .input-group input::placeholder { color: var(--text-muted); }
 
         .input-icon {
             position: absolute;
@@ -555,9 +499,7 @@
             pointer-events: none;
         }
 
-        .input-group input:focus ~ .input-icon {
-            color: var(--accent);
-        }
+        .input-group input:focus ~ .input-icon { color: var(--accent); }
 
         .input-group .toggle-password {
             position: absolute;
@@ -570,16 +512,13 @@
             font-size: 14px;
         }
 
-        .input-group .toggle-password:hover {
-            color: var(--text-primary);
-        }
+        .input-group .toggle-password:hover { color: var(--text-primary); }
 
-        /* Error Message */
         .error-message {
             color: var(--error);
             font-size: 13px;
-            margin-top: -12px;
-            margin-bottom: 16px;
+            margin-top: -8px;
+            margin-bottom: 14px;
             display: none;
             align-items: center;
             gap: 6px;
@@ -600,7 +539,22 @@
             75% { transform: translateX(5px); }
         }
 
-        /* Primary Button */
+        .success-message {
+            color: var(--success);
+            font-size: 13px;
+            margin-top: -8px;
+            margin-bottom: 14px;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(16,185,129,0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(16,185,129,0.15);
+        }
+
+        .success-message.show { display: flex; }
+
         .btn-primary {
             width: 100%;
             padding: 16px;
@@ -629,9 +583,7 @@
             background: var(--accent-light);
         }
 
-        .btn-primary:active {
-            transform: translateY(0);
-        }
+        .btn-primary:active { transform: translateY(0); }
 
         .btn-primary:disabled {
             opacity: 0.7;
@@ -641,19 +593,15 @@
 
         .btn-primary .spinner {
             display: none;
-            width: 18px;
-            height: 18px;
+            width: 18px; height: 18px;
             border: 2px solid rgba(255,255,255,0.3);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Divider */
         .divider {
             display: flex;
             align-items: center;
@@ -665,15 +613,13 @@
             letter-spacing: 3px;
         }
 
-        .divider::before,
-        .divider::after {
+        .divider::before, .divider::after {
             content: '';
             flex: 1;
             height: 1px;
             background: var(--border-color);
         }
 
-        /* Social Login */
         .social-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -694,6 +640,7 @@
             align-items: center;
             justify-content: center;
             text-decoration: none;
+            font-family: var(--font-body);
         }
 
         .social-btn:hover {
@@ -704,22 +651,10 @@
             box-shadow: 0 4px 12px var(--shadow-color);
         }
 
-        .social-btn.github:hover {
-            border-color: #333;
-            color: #fff;
-        }
+        .social-btn.github:hover { border-color: #333; color: #fff; }
+        .social-btn.google:hover { border-color: #ea4335; color: #ea4335; }
+        .social-btn.discord:hover { border-color: #5865f2; color: #5865f2; }
 
-        .social-btn.google:hover {
-            border-color: #ea4335;
-            color: #ea4335;
-        }
-
-        .social-btn.discord:hover {
-            border-color: #5865f2;
-            color: #5865f2;
-        }
-
-        /* Terms */
         .terms-text {
             text-align: center;
             font-size: 11px;
@@ -739,7 +674,46 @@
             border-bottom-color: var(--accent);
         }
 
-        /* Toast Notifications */
+        .switch-mode {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .switch-mode a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .switch-mode a:hover {
+            text-decoration: underline;
+            color: var(--accent-light);
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .name-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
         .toast-container {
             position: fixed;
             top: 24px;
@@ -793,7 +767,6 @@
             to { opacity: 0; transform: translateY(-10px); }
         }
 
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 1024px) {
             .login-page {
                 flex-direction: column;
@@ -823,40 +796,29 @@
             .glass-card { padding: 32px 24px; }
             .logo-ring { width: 60px; height: 60px; font-size: 24px; }
             .theme-toggle { top: 16px; right: 16px; }
+            .name-row { grid-template-columns: 1fr; }
         }
 
-        /* ===== SCROLLBAR ===== */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb {
             background: var(--border-color);
             border-radius: 3px;
         }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--text-muted);
-        }
-
-        /* Noise texture overlay */
         .noise {
-            position: fixed;
-            inset: 0;
+            position: fixed; inset: 0;
             z-index: 5;
             opacity: 0.02;
             pointer-events: none;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
-    <!-- Background Effects -->
     <canvas id="network-canvas"></canvas>
     <div class="grid-overlay"></div>
     <div class="scanlines"></div>
@@ -865,36 +827,27 @@
     <div class="ambient-glow ambient-glow-1"></div>
     <div class="ambient-glow ambient-glow-2"></div>
 
-    <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <!-- Theme Toggle -->
     <button class="theme-toggle" id="theme-toggle" title="Toggle theme">
         <i class="fas fa-sun" id="theme-icon"></i>
     </button>
 
-    <!-- Main Content -->
     <div class="login-page">
-        
-        <!-- LEFT SIDE -->
         <div class="login-left">
             <div class="brand-section">
                 <div class="logo-ring">A</div>
-                
                 <div class="glitch-wrapper">
                     <h1 class="glitch-text" data-text="AMZY HOST">AMZY HOST</h1>
                 </div>
-
                 <div class="typing-container">
                     <span class="typing-text" id="typing-text"></span>
                     <span class="typing-cursor"></span>
                 </div>
-
                 <p class="desc-text">
-                    Deploy your Telegram bots and VPS instances with enterprise-grade infrastructure. 
+                    Deploy your Telegram bots and VPS instances with enterprise-grade infrastructure.
                     Built for developers who demand speed, security, and scale.
                 </p>
-
                 <div class="feature-grid">
                     <div class="feature-card" onclick="createBurst(event)">
                         <i class="fas fa-bolt"></i>
@@ -917,7 +870,6 @@
                         <span>6 regions worldwide</span>
                     </div>
                 </div>
-
                 <div class="stats-row">
                     <div class="stat-box">
                         <span class="stat-number" id="stat-users">0</span>
@@ -935,55 +887,138 @@
             </div>
         </div>
 
-        <!-- RIGHT SIDE -->
         <div class="login-right">
             <div class="glass-card" id="glass-card">
                 <div class="card-inner">
-                    <div class="card-header">
-                        <h2>Access Portal</h2>
-                        <p>Authenticate to enter the system</p>
-                    </div>
 
-                    <div class="input-group">
-                        <i class="fas fa-envelope input-icon"></i>
-                        <input type="email" id="email" placeholder="Email address" autocomplete="email">
-                    </div>
+                    <!-- LOGIN FORM -->
+                    <div class="form-section active" id="login-section">
+                        <div class="card-header">
+                            <h2>Access Portal</h2>
+                            <p>Authenticate to enter the system</p>
+                        </div>
 
-                    <div class="input-group">
-                        <i class="fas fa-lock input-icon"></i>
-                        <input type="password" id="password" placeholder="Password" autocomplete="current-password">
-                        <i class="fas fa-eye toggle-password" id="toggle-password" onclick="togglePassword()"></i>
-                    </div>
+                        <div class="input-group">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="login-email" placeholder="Email address" autocomplete="email">
+                        </div>
 
-                    <div class="error-message" id="error-message">
-                        <i class="fas fa-circle-exclamation"></i>
-                        <span id="error-text"></span>
-                    </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="login-password" placeholder="Password" autocomplete="current-password">
+                            <i class="fas fa-eye toggle-password" id="toggle-login-password" onclick="togglePassword('login-password', 'toggle-login-password')"></i>
+                        </div>
 
-                    <button class="btn-primary" id="login-btn" onclick="handleLogin(this)">
-                        <span class="btn-text">Initialize Session</span>
-                        <div class="spinner"></div>
-                        <i class="fas fa-arrow-right" id="btn-icon"></i>
-                    </button>
+                        <div class="error-message" id="login-error">
+                            <i class="fas fa-circle-exclamation"></i>
+                            <span id="login-error-text"></span>
+                        </div>
 
-                    <div class="divider">or continue with</div>
-
-                    <div class="social-grid">
-                        <a href="/api/auth/github" class="social-btn github" title="GitHub">
-                            <i class="fab fa-github"></i>
-                        </a>
-                        <button class="social-btn google" onclick="showToast('Google OAuth coming soon', 'info')" title="Google">
-                            <i class="fab fa-google"></i>
+                        <button class="btn-primary" id="login-btn" onclick="handleLogin(this)">
+                            <span class="btn-text">Initialize Session</span>
+                            <div class="spinner"></div>
+                            <i class="fas fa-arrow-right" id="login-btn-icon"></i>
                         </button>
-                        <button class="social-btn discord" onclick="showToast('Discord OAuth coming soon', 'info')" title="Discord">
-                            <i class="fab fa-discord"></i>
-                        </button>
+
+                        <div class="divider">or continue with</div>
+
+                        <div class="social-grid">
+                            <button class="social-btn github" onclick="handleSocialLogin('github')" title="GitHub">
+                                <i class="fab fa-github"></i>
+                            </button>
+                            <button class="social-btn google" onclick="handleSocialLogin('google')" title="Google">
+                                <i class="fab fa-google"></i>
+                            </button>
+                            <button class="social-btn discord" onclick="handleSocialLogin('discord')" title="Discord">
+                                <i class="fab fa-discord"></i>
+                            </button>
+                        </div>
+
+                        <p class="terms-text">
+                            By accessing this portal, you agree to the<br>
+                            <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Protocol</a>
+                        </p>
+
+                        <div class="switch-mode">
+                            New here? <a onclick="switchMode('signup')">Create an account</a>
+                        </div>
                     </div>
 
-                    <p class="terms-text">
-                        By accessing this portal, you agree to the<br>
-                        <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Protocol</a>
-                    </p>
+                    <!-- SIGNUP FORM -->
+                    <div class="form-section" id="signup-section">
+                        <div class="card-header">
+                            <h2>Join Amzy Host</h2>
+                            <p>Create your account to get started</p>
+                        </div>
+
+                        <div class="name-row">
+                            <div class="input-group">
+                                <i class="fas fa-user input-icon"></i>
+                                <input type="text" id="signup-firstname" placeholder="First name" autocomplete="given-name">
+                            </div>
+                            <div class="input-group">
+                                <i class="fas fa-user input-icon"></i>
+                                <input type="text" id="signup-lastname" placeholder="Last name" autocomplete="family-name">
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <i class="fas fa-envelope input-icon"></i>
+                            <input type="email" id="signup-email" placeholder="Email address" autocomplete="email">
+                        </div>
+
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="signup-password" placeholder="Password (min 8 chars)" autocomplete="new-password">
+                            <i class="fas fa-eye toggle-password" id="toggle-signup-password" onclick="togglePassword('signup-password', 'toggle-signup-password')"></i>
+                        </div>
+
+                        <div class="input-group">
+                            <i class="fas fa-lock input-icon"></i>
+                            <input type="password" id="signup-confirm" placeholder="Confirm password" autocomplete="new-password">
+                            <i class="fas fa-eye toggle-password" id="toggle-signup-confirm" onclick="togglePassword('signup-confirm', 'toggle-signup-confirm')"></i>
+                        </div>
+
+                        <div class="error-message" id="signup-error">
+                            <i class="fas fa-circle-exclamation"></i>
+                            <span id="signup-error-text"></span>
+                        </div>
+
+                        <div class="success-message" id="signup-success">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="signup-success-text"></span>
+                        </div>
+
+                        <button class="btn-primary" id="signup-btn" onclick="handleSignup(this)">
+                            <span class="btn-text">Create Account</span>
+                            <div class="spinner"></div>
+                            <i class="fas fa-arrow-right" id="signup-btn-icon"></i>
+                        </button>
+
+                        <div class="divider">or sign up with</div>
+
+                        <div class="social-grid">
+                            <button class="social-btn github" onclick="handleSocialLogin('github')" title="GitHub">
+                                <i class="fab fa-github"></i>
+                            </button>
+                            <button class="social-btn google" onclick="handleSocialLogin('google')" title="Google">
+                                <i class="fab fa-google"></i>
+                            </button>
+                            <button class="social-btn discord" onclick="handleSocialLogin('discord')" title="Discord">
+                                <i class="fab fa-discord"></i>
+                            </button>
+                        </div>
+
+                        <p class="terms-text">
+                            By signing up, you agree to the<br>
+                            <a href="terms.html">Terms of Service</a> and <a href="privacy.html">Privacy Protocol</a>
+                        </p>
+
+                        <div class="switch-mode">
+                            Already have an account? <a onclick="switchMode('login')">Sign in</a>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -1031,6 +1066,18 @@
 
     initTheme();
 
+    // ===== FORM SWITCHING =====
+    function switchMode(mode) {
+        document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(mode + '-section').classList.add('active');
+        clearErrors();
+    }
+
+    function clearErrors() {
+        document.querySelectorAll('.error-message').forEach(e => e.classList.remove('show'));
+        document.querySelectorAll('.success-message').forEach(e => e.classList.remove('show'));
+    }
+
     // ===== PARTICLE NETWORK =====
     const canvas = document.getElementById('network-canvas');
     const ctx = canvas.getContext('2d');
@@ -1050,15 +1097,11 @@
             this.vy = (Math.random() - 0.5) * 0.5;
             this.size = Math.random() * 2 + 1;
         }
-
         update() {
             this.x += this.vx;
             this.y += this.vy;
-
             if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
             if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-
-            // Mouse interaction
             if (mouse.x != null) {
                 const dx = mouse.x - this.x;
                 const dy = mouse.y - this.y;
@@ -1070,12 +1113,11 @@
                 }
             }
         }
-
         draw() {
             const isDark = html.getAttribute('data-theme') === 'dark';
             ctx.beginPath();
             ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fillStyle = isDark 
+            ctx.fillStyle = isDark
                 ? `rgba(99, 102, 241, ${this.size * 0.15})`
                 : `rgba(79, 70, 229, ${this.size * 0.1})`;
             ctx.fill();
@@ -1085,27 +1127,18 @@
     function initParticles() {
         particles = [];
         const count = Math.min(100, Math.floor((canvas.width * canvas.height) / 15000));
-        for (let i = 0; i < count; i++) {
-            particles.push(new Particle());
-        }
+        for (let i = 0; i < count; i++) particles.push(new Particle());
     }
 
     function animateParticles() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         const isDark = html.getAttribute('data-theme') === 'dark';
-
-        particles.forEach(p => {
-            p.update();
-            p.draw();
-        });
-
-        // Draw connections
+        particles.forEach(p => { p.update(); p.draw(); });
         for (let i = 0; i < particles.length; i++) {
             for (let j = i + 1; j < particles.length; j++) {
                 const dx = particles[i].x - particles[j].x;
                 const dy = particles[i].y - particles[j].y;
                 const dist = Math.sqrt(dx * dx + dy * dy);
-
                 if (dist < 120) {
                     ctx.beginPath();
                     ctx.moveTo(particles[i].x, particles[i].y);
@@ -1118,7 +1151,6 @@
                 }
             }
         }
-
         requestAnimationFrame(animateParticles);
     }
 
@@ -1126,36 +1158,21 @@
     initParticles();
     animateParticles();
 
-    window.addEventListener('resize', () => {
-        resizeCanvas();
-        initParticles();
-    });
+    window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
 
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX;
-        mouse.y = e.clientY;
-    });
-
-    window.addEventListener('mouseleave', () => {
-        mouse.x = null;
-        mouse.y = null;
-    });
-
-    // Click burst effect
     function createBurst(event) {
         const rect = event.currentTarget.getBoundingClientRect();
         const x = rect.left + rect.width / 2;
         const y = rect.top + rect.height / 2;
-        
         for (let i = 0; i < 8; i++) {
             const particle = new Particle();
-            particle.x = x;
-            particle.y = y;
+            particle.x = x; particle.y = y;
             particle.vx = (Math.random() - 0.5) * 8;
             particle.vy = (Math.random() - 0.5) * 8;
             particle.size = Math.random() * 3 + 2;
             particles.push(particle);
-            
             setTimeout(() => {
                 const idx = particles.indexOf(particle);
                 if (idx > -1) particles.splice(idx, 1);
@@ -1165,14 +1182,11 @@
 
     // ===== TYPING EFFECT =====
     const phrases = ['Deploy Bots Instantly', 'Scale Without Limits', 'Secure by Default', 'Built for Developers'];
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let isDeleting = false;
+    let phraseIndex = 0, charIndex = 0, isDeleting = false;
 
     function typeEffect() {
         const typingElement = document.getElementById('typing-text');
         const currentPhrase = phrases[phraseIndex];
-        
         if (isDeleting) {
             typingElement.textContent = currentPhrase.substring(0, charIndex - 1);
             charIndex--;
@@ -1180,9 +1194,7 @@
             typingElement.textContent = currentPhrase.substring(0, charIndex + 1);
             charIndex++;
         }
-
         let typeSpeed = isDeleting ? 40 : 80;
-
         if (!isDeleting && charIndex === currentPhrase.length) {
             typeSpeed = 2000;
             isDeleting = true;
@@ -1191,14 +1203,12 @@
             phraseIndex = (phraseIndex + 1) % phrases.length;
             typeSpeed = 500;
         }
-
         setTimeout(typeEffect, typeSpeed);
     }
     typeEffect();
 
     // ===== 3D TILT CARD =====
     const glassCard = document.getElementById('glass-card');
-    
     glassCard.addEventListener('mousemove', (e) => {
         const rect = glassCard.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -1207,10 +1217,8 @@
         const centerY = rect.height / 2;
         const rotateX = (y - centerY) / 25;
         const rotateY = (centerX - x) / 25;
-        
         glassCard.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
     });
-
     glassCard.addEventListener('mouseleave', () => {
         glassCard.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
     });
@@ -1220,13 +1228,9 @@
         const el = document.getElementById(id);
         const increment = target / (duration / 16);
         let current = 0;
-        
         const timer = setInterval(() => {
             current += increment;
-            if (current >= target) {
-                current = target;
-                clearInterval(timer);
-            }
+            if (current >= target) { current = target; clearInterval(timer); }
             el.textContent = Math.floor(current).toLocaleString();
         }, 16);
     }
@@ -1241,24 +1245,16 @@
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        const icons = {
-            success: 'fa-check-circle',
-            error: 'fa-circle-exclamation',
-            info: 'fa-info-circle'
-        };
-        toast.innerHTML = `
-            <i class="fas ${icons[type]}"></i>
-            <span>${message}</span>
-        `;
+        const icons = { success: 'fa-check-circle', error: 'fa-circle-exclamation', info: 'fa-info-circle' };
+        toast.innerHTML = `<i class="fas ${icons[type]}"></i><span>${message}</span>`;
         container.appendChild(toast);
         setTimeout(() => toast.remove(), 3000);
     }
 
     // ===== PASSWORD TOGGLE =====
-    function togglePassword() {
-        const passwordInput = document.getElementById('password');
-        const toggleIcon = document.getElementById('toggle-password');
-        
+    function togglePassword(inputId, iconId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = document.getElementById(iconId);
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
             toggleIcon.classList.remove('fa-eye');
@@ -1270,36 +1266,53 @@
         }
     }
 
-    // ===== LOGIN HANDLER =====
-    function showError(message) {
-        const errorEl = document.getElementById('error-message');
-        const errorText = document.getElementById('error-text');
+    // ===== ERROR / SUCCESS HELPERS =====
+    function showError(elementId, message) {
+        const errorEl = document.getElementById(elementId);
+        const errorText = document.getElementById(elementId + '-text');
         errorText.textContent = message;
         errorEl.classList.add('show');
         setTimeout(() => errorEl.classList.remove('show'), 5000);
     }
 
-    async function handleLogin(btn) {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
+    function showSuccess(elementId, message) {
+        const successEl = document.getElementById(elementId);
+        const successText = document.getElementById(elementId + '-text');
+        successText.textContent = message;
+        successEl.classList.add('show');
+    }
+
+    function setLoading(btn, loading) {
         const spinner = btn.querySelector('.spinner');
-        const icon = btn.querySelector('#btn-icon');
+        const icon = btn.querySelector('i[id$="-btn-icon"]');
         const text = btn.querySelector('.btn-text');
-        
+        btn.disabled = loading;
+        if (loading) {
+            text.style.display = 'none';
+            if (icon) icon.style.display = 'none';
+            spinner.style.display = 'block';
+        } else {
+            text.style.display = 'block';
+            if (icon) icon.style.display = 'block';
+            spinner.style.display = 'none';
+        }
+    }
+
+    // ===== LOGIN HANDLER =====
+    async function handleLogin(btn) {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+
         if (!email || !password) {
-            showError('Please fill in all fields');
+            showError('login-error', 'Please fill in all fields');
             return;
         }
-        
         if (!email.includes('@')) {
-            showError('Please enter a valid email address');
+            showError('login-error', 'Please enter a valid email address');
             return;
         }
 
-        btn.disabled = true;
-        text.style.display = 'none';
-        icon.style.display = 'none';
-        spinner.style.display = 'block';
+        setLoading(btn, true);
 
         try {
             const response = await fetch(`${API_URL}/api/auth/login`, {
@@ -1311,35 +1324,139 @@
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Authentication failed');
+                throw new Error(data.error || data.message || 'Authentication failed');
             }
 
             localStorage.setItem('amzy-token', data.token);
             localStorage.setItem('amzy-user', JSON.stringify(data.user));
-            
             showToast('Session initialized successfully', 'success');
-            
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1000);
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
 
         } catch (error) {
-            showError(error.message || 'Network error. Please try again.');
-            btn.disabled = false;
-            text.style.display = 'block';
-            icon.style.display = 'block';
-            spinner.style.display = 'none';
+            showError('login-error', error.message || 'Network error. Please try again.');
+            setLoading(btn, false);
         }
     }
 
-    // ===== GITHUB OAUTH =====
+    // ===== SIGNUP HANDLER =====
+    async function handleSignup(btn) {
+        const firstName = document.getElementById('signup-firstname').value.trim();
+        const lastName = document.getElementById('signup-lastname').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const confirm = document.getElementById('signup-confirm').value;
+
+        // Validation
+        if (!firstName || !lastName || !email || !password || !confirm) {
+            showError('signup-error', 'Please fill in all fields');
+            return;
+        }
+        if (!email.includes('@')) {
+            showError('signup-error', 'Please enter a valid email address');
+            return;
+        }
+        if (password.length < 8) {
+            showError('signup-error', 'Password must be at least 8 characters');
+            return;
+        }
+        if (password !== confirm) {
+            showError('signup-error', 'Passwords do not match');
+            return;
+        }
+
+        setLoading(btn, true);
+
+        try {
+            const response = await fetch(`${API_URL}/api/auth/signup`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    firstName,
+                    lastName,
+                    email,
+                    password
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || data.message || 'Registration failed');
+            }
+
+            showSuccess('signup-success', 'Account created! Redirecting to login...');
+            showToast('Account created successfully!', 'success');
+
+            // Auto-fill login form and switch after delay
+            setTimeout(() => {
+                document.getElementById('login-email').value = email;
+                document.getElementById('login-password').value = '';
+                switchMode('login');
+                showToast('Please sign in with your new account', 'info');
+            }, 1500);
+
+        } catch (error) {
+            showError('signup-error', error.message || 'Network error. Please try again.');
+            setLoading(btn, false);
+        }
+    }
+
+    // ===== SOCIAL LOGIN HANDLER =====
+    function handleSocialLogin(provider) {
+        const providers = {
+            github: { name: 'GitHub', url: '/api/auth/github' },
+            google: { name: 'Google', url: '/api/auth/google' },
+            discord: { name: 'Discord', url: '/api/auth/discord' }
+        };
+
+        const config = providers[provider];
+        if (!config) return;
+
+        // Open OAuth popup
+        const width = 500;
+        const height = 600;
+        const left = (window.innerWidth - width) / 2;
+        const top = (window.innerHeight - height) / 2;
+
+        const popup = window.open(
+            `${API_URL}${config.url}`,
+            `${config.name} OAuth`,
+            `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`
+        );
+
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+            // Popup blocked - redirect instead
+            window.location.href = `${API_URL}${config.url}`;
+            return;
+        }
+
+        // Listen for OAuth callback message
+        window.addEventListener('message', function oauthCallback(event) {
+            if (event.origin !== window.location.origin) return;
+            if (event.data && event.data.type === 'oauth-success') {
+                window.removeEventListener('message', oauthCallback);
+                const { token, user } = event.data;
+                localStorage.setItem('amzy-token', token);
+                localStorage.setItem('amzy-user', JSON.stringify(user));
+                showToast(`${config.name} login successful`, 'success');
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+            }
+            if (event.data && event.data.type === 'oauth-error') {
+                window.removeEventListener('message', oauthCallback);
+                showToast(event.data.message || `${config.name} login failed`, 'error');
+            }
+        });
+    }
+
+    // ===== OAUTH CALLBACK (for redirect flow) =====
     function handleOAuthCallback() {
         const urlParams = new URLSearchParams(window.location.search);
         const token = urlParams.get('token');
         const error = urlParams.get('error');
+        const provider = urlParams.get('provider') || 'OAuth';
 
         if (error) {
-            showToast('Authentication failed', 'error');
+            showToast(decodeURIComponent(error), 'error');
             window.history.replaceState({}, document.title, window.location.pathname);
             return;
         }
@@ -1352,10 +1469,8 @@
             .then(res => res.json())
             .then(user => {
                 localStorage.setItem('amzy-user', JSON.stringify(user));
-                showToast('GitHub login successful', 'success');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1000);
+                showToast(`${provider} login successful`, 'success');
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
             })
             .catch(() => {
                 showToast('Failed to fetch user data', 'error');
@@ -1383,10 +1498,12 @@
 
     handleOAuthCallback();
 
-    document.getElementById('password').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            handleLogin(document.getElementById('login-btn'));
-        }
+    // Enter key support
+    document.getElementById('login-password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleLogin(document.getElementById('login-btn'));
+    });
+    document.getElementById('signup-confirm').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleSignup(document.getElementById('signup-btn'));
     });
 
     // ===== MOUSE PARALLAX =====
