@@ -1366,6 +1366,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
+<base target="_blank">
 </head>
 <body>
 
@@ -1567,446 +1568,427 @@
         </div>
     </div>
 
-    <script src="js/auth.js"></script>
-    <script src="js/app.js"></script>
     <script>
-        // ===== THEME SYSTEM (matching Terms page) =====
-        const themeIcon = document.getElementById('theme-icon');
-        const html = document.documentElement;
+    
+    // ===== CLIENT-SIDE AUTH & DATA (NO BACKEND) =====
+    const DB_KEY = 'amzy_users_db';
+    const SESSION_KEY = 'amzy_session';
 
-        function initTheme() {
-            const savedTheme = localStorage.getItem('amzy-theme');
-            const savedMode = localStorage.getItem('amzy-theme-mode') || 'manual';
-            
-            if (savedMode === 'system') {
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                html.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
-            } else if (savedTheme) {
-                html.setAttribute('data-theme', savedTheme);
-            } else {
-                html.setAttribute('data-theme', 'dark');
-            }
-            updateThemeIcon();
+    function getSession() {
+        const raw = localStorage.getItem(SESSION_KEY);
+        return raw ? JSON.parse(raw) : null;
+    }
+
+    function getUsers() {
+        return JSON.parse(localStorage.getItem(DB_KEY) || '[]');
+    }
+
+    function findUserByEmail(email) {
+        return getUsers().find(u => u.email.toLowerCase() === email.toLowerCase());
+    }
+
+    // ===== THEME SYSTEM =====
+    const themeIcon = document.getElementById('theme-icon');
+    const html = document.documentElement;
+
+    function initTheme() {
+        const savedTheme = localStorage.getItem('amzy-theme');
+        if (savedTheme) { html.setAttribute('data-theme', savedTheme); }
+        else { html.setAttribute('data-theme', 'dark'); }
+        updateThemeIcon();
+    }
+
+    function updateThemeIcon() {
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        themeIcon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+    }
+
+    function toggleTheme() {
+        const current = html.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('amzy-theme', next);
+        updateThemeIcon();
+    }
+
+    // ===== PARTICLE NETWORK =====
+    const canvas = document.getElementById('network-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let mouse = { x: null, y: null };
+
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.vx = (Math.random() - 0.5) * 0.4;
+            this.vy = (Math.random() - 0.5) * 0.4;
+            this.size = Math.random() * 1.5 + 0.5;
         }
-
-        function updateThemeIcon() {
+        update() {
+            this.x += this.vx; this.y += this.vy;
+            if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+            if (mouse.x != null) {
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 120) {
+                    const force = (120 - dist) / 120;
+                    this.vx -= (dx / dist) * force * 0.3;
+                    this.vy -= (dy / dist) * force * 0.3;
+                }
+            }
+        }
+        draw() {
             const isDark = html.getAttribute('data-theme') === 'dark';
-            themeIcon.className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = isDark ? `rgba(99, 102, 241, ${this.size * 0.2})` : `rgba(79, 70, 229, ${this.size * 0.15})`;
+            ctx.fill();
         }
+    }
 
-        function toggleTheme() {
-            const current = html.getAttribute('data-theme') || 'dark';
-            const next = current === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', next);
-            localStorage.setItem('amzy-theme', next);
-            localStorage.setItem('amzy-theme-mode', 'manual');
-            updateThemeIcon();
-        }
+    function initParticles() {
+        particles = [];
+        const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 20000));
+        for (let i = 0; i < count; i++) particles.push(new Particle());
+    }
 
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            if (localStorage.getItem('amzy-theme-mode') === 'system') {
-                html.setAttribute('data-theme', e.matches ? 'dark' : 'light');
-                updateThemeIcon();
-            }
-        });
-
-        // ===== PARTICLE NETWORK (matching Terms page) =====
-        const canvas = document.getElementById('network-canvas');
-        const ctx = canvas.getContext('2d');
-        let particles = [];
-        let mouse = { x: null, y: null };
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * 0.4;
-                this.vy = (Math.random() - 0.5) * 0.4;
-                this.size = Math.random() * 1.5 + 0.5;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-
-                if (mouse.x != null) {
-                    const dx = mouse.x - this.x;
-                    const dy = mouse.y - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 120) {
-                        const force = (120 - dist) / 120;
-                        this.vx -= (dx / dist) * force * 0.3;
-                        this.vy -= (dy / dist) * force * 0.3;
-                    }
+    function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const isDark = html.getAttribute('data-theme') === 'dark';
+        particles.forEach(p => { p.update(); p.draw(); });
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 100) {
+                    ctx.beginPath();
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.strokeStyle = isDark ? `rgba(99, 102, 241, ${0.06 * (1 - dist / 100)})` : `rgba(79, 70, 229, ${0.04 * (1 - dist / 100)})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
                 }
             }
+        }
+        requestAnimationFrame(animateParticles);
+    }
 
-            draw() {
-                const isDark = html.getAttribute('data-theme') === 'dark';
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-                ctx.fillStyle = isDark 
-                    ? `rgba(99, 102, 241, ${this.size * 0.2})`
-                    : `rgba(79, 70, 229, ${this.size * 0.15})`;
-                ctx.fill();
+    resizeCanvas();
+    initParticles();
+    animateParticles();
+
+    window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+    window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
+
+    // ===== NAVBAR SCROLL =====
+    let lastScroll = 0;
+    window.addEventListener('scroll', () => {
+        const nav = document.querySelector('.navbar');
+        const y = window.scrollY;
+        if (y > lastScroll && y > 80) nav.style.transform = 'translateY(-100%)';
+        else nav.style.transform = 'translateY(0)';
+        lastScroll = y;
+    });
+
+    // ===== VPS STATUS (CLIENT-SIDE SIMULATION - NO BACKEND) =====
+    let vpsStatusInterval = null;
+    let vpsUptimeStart = Date.now();
+
+    async function checkVpsStatus() {
+        const dot = document.getElementById('vps-dot');
+        const text = document.getElementById('vps-text');
+        const tooltipStatus = document.getElementById('tooltip-status');
+        const tooltipLatency = document.getElementById('tooltip-latency');
+        const tooltipLast = document.getElementById('tooltip-last');
+
+        dot.className = 'status-dot checking';
+        text.className = 'status-text checking';
+        text.textContent = 'Checking...';
+        tooltipStatus.textContent = 'Checking...';
+
+        // Simulate network delay (no actual fetch needed)
+        await new Promise(r => setTimeout(r, 600 + Math.random() * 400));
+
+        const latency = Math.floor(Math.random() * 80 + 20);
+
+        dot.className = 'status-dot online';
+        text.className = 'status-text online';
+        text.textContent = 'Online';
+        tooltipStatus.textContent = 'Connected';
+        tooltipLatency.textContent = latency + ' ms';
+        tooltipLast.textContent = new Date().toLocaleTimeString();
+        updateUptime();
+    }
+
+    function updateUptime() {
+        const elapsed = Date.now() - vpsUptimeStart;
+        const seconds = Math.floor(elapsed / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        let uptimeText = '';
+        if (days > 0) uptimeText += days + 'd ';
+        if (hours % 24 > 0) uptimeText += (hours % 24) + 'h ';
+        uptimeText += (minutes % 60) + 'm';
+        document.getElementById('tooltip-uptime').textContent = uptimeText;
+    }
+
+    function startVpsMonitoring() {
+        checkVpsStatus();
+        vpsStatusInterval = setInterval(checkVpsStatus, 30000);
+        setInterval(updateUptime, 60000);
+    }
+
+    // ===== NOTIFICATIONS =====
+    function toggleNotifications() {
+        const dropdown = document.getElementById('notif-dropdown');
+        dropdown.classList.toggle('show');
+    }
+
+    document.addEventListener('click', (e) => {
+        const bell = document.querySelector('.notification-bell');
+        const dropdown = document.getElementById('notif-dropdown');
+        if (!bell.contains(e.target)) dropdown.classList.remove('show');
+    });
+
+    // ===== DAILY CLAIM =====
+    function claimDaily() {
+        const btn = document.getElementById('claim-btn');
+        const timer = document.getElementById('claim-timer');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-check"></i> Claimed';
+
+        const coinDisplay = document.getElementById('coin-display');
+        const coinBalance = document.getElementById('coin-balance');
+        let current = parseInt(coinDisplay.textContent) || 0;
+        coinDisplay.textContent = current + 1;
+        coinBalance.textContent = current + 1;
+        localStorage.setItem('amzy-coins', current + 1);
+        localStorage.setItem('amzy-last-claim', new Date().toDateString());
+
+        timer.style.display = 'block';
+        let hours = 24, minutes = 0, seconds = 0;
+        const interval = setInterval(() => {
+            if (seconds > 0) seconds--;
+            else if (minutes > 0) { minutes--; seconds = 59; }
+            else if (hours > 0) { hours--; minutes = 59; seconds = 59; }
+            else {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-coins"></i> Claim 1 Coin';
+                timer.style.display = 'none';
+                return;
             }
-        }
+            timer.textContent = `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+        }, 1000);
+    }
 
-        function initParticles() {
-            particles = [];
-            const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 20000));
-            for (let i = 0; i < count; i++) particles.push(new Particle());
-        }
-
-        function animateParticles() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const isDark = html.getAttribute('data-theme') === 'dark';
-
-            particles.forEach(p => { p.update(); p.draw(); });
-
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist < 100) {
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = isDark
-                            ? `rgba(99, 102, 241, ${0.06 * (1 - dist / 100)})`
-                            : `rgba(79, 70, 229, ${0.04 * (1 - dist / 100)})`;
-                        ctx.lineWidth = 0.5;
-                        ctx.stroke();
-                    }
-                }
-            }
-            requestAnimationFrame(animateParticles);
-        }
-
-        resizeCanvas();
-        initParticles();
-        animateParticles();
-
-        window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
-        window.addEventListener('mousemove', (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-        window.addEventListener('mouseleave', () => { mouse.x = null; mouse.y = null; });
-
-        // ===== NAVBAR SCROLL (from Terms) =====
-        let lastScroll = 0;
-        window.addEventListener('scroll', () => {
-            const nav = document.querySelector('.navbar');
-            const y = window.scrollY;
-            if (y > lastScroll && y > 80) nav.style.transform = 'translateY(-100%)';
-            else nav.style.transform = 'translateY(0)';
-            lastScroll = y;
-        });
-
-        // ===== VPS STATUS CHECK =====
-        let vpsStatusInterval = null;
-        let vpsUptimeStart = null;
-
-        async function checkVpsStatus() {
-            const dot = document.getElementById('vps-dot');
-            const text = document.getElementById('vps-text');
-            const tooltipStatus = document.getElementById('tooltip-status');
-            const tooltipLatency = document.getElementById('tooltip-latency');
-            const tooltipLast = document.getElementById('tooltip-last');
-            
-            dot.className = 'status-dot checking';
-            text.className = 'status-text checking';
-            text.textContent = 'Checking...';
-            tooltipStatus.textContent = 'Checking...';
-            
-            const startTime = performance.now();
-            try {
-                const response = await fetch('/api/health', { 
-                    method: 'GET', 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    cache: 'no-store' 
-                });
-                const latency = Math.round(performance.now() - startTime);
-                
-                if (response.ok) {
-                    dot.className = 'status-dot online';
-                    text.className = 'status-text online';
-                    text.textContent = 'Online';
-                    tooltipStatus.textContent = 'Connected';
-                    tooltipLatency.textContent = latency + ' ms';
-                    tooltipLast.textContent = new Date().toLocaleTimeString();
-                    if (!vpsUptimeStart) vpsUptimeStart = Date.now();
-                    updateUptime();
-                } else { 
-                    throw new Error('Health check failed'); 
-                }
-            } catch (error) {
-                dot.className = 'status-dot offline';
-                text.className = 'status-text offline';
-                text.textContent = 'Offline';
-                tooltipStatus.textContent = 'Disconnected';
-                tooltipLatency.textContent = '-- ms';
-                tooltipLast.textContent = new Date().toLocaleTimeString();
-                vpsUptimeStart = null;
-                document.getElementById('tooltip-uptime').textContent = '--';
-            }
-        }
-
-        function updateUptime() {
-            if (!vpsUptimeStart) return;
-            const elapsed = Date.now() - vpsUptimeStart;
-            const seconds = Math.floor(elapsed / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            const days = Math.floor(hours / 24);
-            let uptimeText = '';
-            if (days > 0) uptimeText += days + 'd ';
-            if (hours % 24 > 0) uptimeText += (hours % 24) + 'h ';
-            uptimeText += (minutes % 60) + 'm';
-            document.getElementById('tooltip-uptime').textContent = uptimeText;
-        }
-
-        function startVpsMonitoring() {
-            checkVpsStatus();
-            vpsStatusInterval = setInterval(checkVpsStatus, 30000);
-            setInterval(updateUptime, 60000);
-        }
-
-        // ===== NOTIFICATIONS =====
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notif-dropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        document.addEventListener('click', (e) => {
-            const bell = document.querySelector('.notification-bell');
-            const dropdown = document.getElementById('notif-dropdown');
-            if (!bell.contains(e.target)) dropdown.classList.remove('show');
-        });
-
-        // ===== DAILY CLAIM =====
-        function claimDaily() {
+    function checkDailyClaim() {
+        const lastClaim = localStorage.getItem('amzy-last-claim');
+        const now = new Date().toDateString();
+        if (lastClaim === now) {
             const btn = document.getElementById('claim-btn');
-            const timer = document.getElementById('claim-timer');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-check"></i> Claimed';
-            
-            const coinDisplay = document.getElementById('coin-display');
-            const coinBalance = document.getElementById('coin-balance');
-            let current = parseInt(coinDisplay.textContent) || 0;
-            coinDisplay.textContent = current + 1;
-            coinBalance.textContent = current + 1;
-            localStorage.setItem('amzy-coins', current + 1);
-            localStorage.setItem('amzy-last-claim', new Date().toDateString());
-            
-            timer.style.display = 'block';
-            let hours = 24, minutes = 0, seconds = 0;
-            const interval = setInterval(() => {
-                if (seconds > 0) seconds--;
-                else if (minutes > 0) { minutes--; seconds = 59; }
-                else if (hours > 0) { hours--; minutes = 59; seconds = 59; }
-                else {
-                    clearInterval(interval);
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-coins"></i> Claim 1 Coin';
-                    timer.style.display = 'none';
-                    return;
-                }
-                timer.textContent = `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
-            }, 1000);
+            document.getElementById('claim-timer').style.display = 'block';
         }
+    }
 
-        function checkDailyClaim() {
-            const lastClaim = localStorage.getItem('amzy-last-claim');
-            const now = new Date().toDateString();
-            if (lastClaim === now) {
-                const btn = document.getElementById('claim-btn');
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-check"></i> Claimed';
-                document.getElementById('claim-timer').style.display = 'block';
-            }
-        }
+    // ===== LOGOUT =====
+    function logout() {
+        localStorage.removeItem(SESSION_KEY);
+        window.location.href = 'login.html';
+    }
 
-        // ===== LOGOUT =====
-        function logout() {
-            localStorage.removeItem('amzy-token');
-            localStorage.removeItem('amzy-user');
+    // ===== LOAD DASHBOARD DATA =====
+    function loadDashboard() {
+        const session = getSession();
+        if (!session) {
             window.location.href = 'login.html';
+            return;
         }
 
-        // ===== LOAD DASHBOARD =====
-        function loadDashboard() {
-            const user = JSON.parse(localStorage.getItem('amzy-user') || '{}');
-            if (user.name) document.getElementById('user-name').textContent = user.name;
-            if (user.avatar) document.getElementById('user-avatar').src = user.avatar;
-            
-            const bots = JSON.parse(localStorage.getItem('amzy-bots') || '[]');
-            document.getElementById('total-bots').textContent = bots.length;
-            document.getElementById('active-bots').textContent = bots.filter(b => b.active).length;
-            
-            const coins = parseInt(localStorage.getItem('amzy-coins') || '0');
-            document.getElementById('coin-display').textContent = coins;
-            document.getElementById('coin-balance').textContent = coins;
-            
-            if (user.role === 'admin') document.getElementById('admin-link').style.display = 'flex';
-        }
+        // Set user name
+        const userName = session.firstName || 'User';
+        document.getElementById('user-name').textContent = userName;
 
-        function loadNotifications() {
-            const count = 0;
-            const badge = document.getElementById('notif-count');
-            if (count > 0) { 
-                badge.textContent = count; 
-                badge.style.display = 'flex'; 
+        // Set avatar
+        const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=6366f1&color=fff&size=128`;
+        document.getElementById('user-avatar').src = avatarUrl;
+
+        // Load bots
+        const bots = JSON.parse(localStorage.getItem('amzy-bots') || '[]');
+        document.getElementById('total-bots').textContent = bots.length;
+        document.getElementById('active-bots').textContent = bots.filter(b => b.active).length;
+
+        // Load coins
+        const coins = parseInt(localStorage.getItem('amzy-coins') || '0');
+        document.getElementById('coin-display').textContent = coins;
+        document.getElementById('coin-balance').textContent = coins;
+
+        // Show admin link if applicable
+        if (session.email === 'admin@amzy.host') {
+            document.getElementById('admin-link').style.display = 'flex';
+        }
+    }
+
+    function loadNotifications() {
+        // Static welcome notification
+        const notifList = document.getElementById('notif-list');
+        const session = getSession();
+        if (session) {
+            notifList.innerHTML = `
+                <div class="notif-item">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="notif-text"><strong>Welcome back!</strong><span>Logged in as ${session.email}</span></div>
+                </div>
+                <div class="notif-item">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="notif-text"><strong>Getting Started</strong><span>Deploy your first bot from the Deploy page</span></div>
+                </div>
+            `;
+        }
+    }
+
+    // ===== INIT =====
+    initTheme();
+    loadDashboard();
+    checkDailyClaim();
+    loadNotifications();
+    startVpsMonitoring();
+
+    // Stat number animation
+    window.addEventListener('load', () => {
+        const statNumbers = document.querySelectorAll('.stat-info h3');
+        statNumbers.forEach((el, i) => {
+            const target = parseInt(el.textContent) || 0;
+            if (target > 0) {
+                let current = 0;
+                const increment = target / 30;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) { current = target; clearInterval(timer); }
+                    el.textContent = Math.floor(current);
+                }, 50 + i * 100);
             }
+        });
+    });
+
+    // ===== ADMIN PIN GATE =====
+    const ADMIN_PIN = '2024';
+
+    function openAdminModal(e) {
+        e.preventDefault();
+        document.getElementById('admin-modal').classList.add('show');
+        setTimeout(() => { document.querySelector('.pin-inputs input[data-index="0"]').focus(); }, 100);
+    }
+
+    function closeAdminModal() {
+        document.getElementById('admin-modal').classList.remove('show');
+        document.getElementById('pin-error').classList.remove('show');
+        document.querySelectorAll('.pin-inputs input').forEach(inp => inp.value = '');
+    }
+
+    function handlePinInput(input) {
+        const val = input.value.replace(/\D/g, '');
+        input.value = val;
+        if (val && input.dataset.index < 3) {
+            const next = document.querySelector(`.pin-inputs input[data-index="${parseInt(input.dataset.index) + 1}"]`);
+            if (next) next.focus();
         }
+        document.getElementById('pin-error').classList.remove('show');
+    }
 
-        // ===== INIT =====
-        initTheme();
-        if (!localStorage.getItem('amzy-token')) window.location.href = 'login.html';
-        loadDashboard();
-        checkDailyClaim();
-        loadNotifications();
-        startVpsMonitoring();
+    function handlePinKeydown(input, e) {
+        if (e.key === 'Backspace' && !input.value && input.dataset.index > 0) {
+            const prev = document.querySelector(`.pin-inputs input[data-index="${parseInt(input.dataset.index) - 1}"]`);
+            if (prev) prev.focus();
+        }
+        if (e.key === 'Enter') verifyAdminPin();
+    }
 
-        // Stat number animation
-        window.addEventListener('load', () => {
-            const statNumbers = document.querySelectorAll('.stat-info h3');
-            statNumbers.forEach((el, i) => {
-                const target = parseInt(el.textContent) || 0;
-                if (target > 0) {
-                    let current = 0;
-                    const increment = target / 30;
-                    const timer = setInterval(() => {
-                        current += increment;
-                        if (current >= target) { 
-                            current = target; 
-                            clearInterval(timer); 
-                        }
-                        el.textContent = Math.floor(current);
-                    }, 50 + i * 100);
-                }
+    function verifyAdminPin() {
+        const inputs = document.querySelectorAll('.pin-inputs input');
+        const entered = Array.from(inputs).map(i => i.value).join('');
+        if (entered === ADMIN_PIN) {
+            closeAdminModal();
+            window.location.href = 'admin.html';
+        } else {
+            document.getElementById('pin-error').classList.add('show');
+            inputs.forEach(i => {
+                i.style.borderColor = 'var(--error)';
+                setTimeout(() => { i.style.borderColor = ''; i.value = ''; }, 400);
             });
-        });
-
-        // ===== ADMIN PIN GATE =====
-        const ADMIN_PIN = '2024';
-
-        function openAdminModal(e) {
-            e.preventDefault();
-            document.getElementById('admin-modal').classList.add('show');
-            setTimeout(() => { 
-                document.querySelector('.pin-inputs input[data-index="0"]').focus(); 
-            }, 100);
+            setTimeout(() => { inputs[0].focus(); }, 450);
         }
+    }
 
-        function closeAdminModal() {
-            document.getElementById('admin-modal').classList.remove('show');
-            document.getElementById('pin-error').classList.remove('show');
-            document.querySelectorAll('.pin-inputs input').forEach(inp => inp.value = '');
-        }
+    document.getElementById('admin-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'admin-modal') closeAdminModal();
+    });
+    
+    // ============================================================
+    // AMZY AI TUTOR CHATBOT
+    // ============================================================
 
-        function handlePinInput(input) {
-            const val = input.value.replace(/\D/g, '');
-            input.value = val;
-            if (val && input.dataset.index < 3) {
-                const next = document.querySelector(`.pin-inputs input[data-index="${parseInt(input.dataset.index) + 1}"]`);
-                if (next) next.focus();
-            }
-            document.getElementById('pin-error').classList.remove('show');
-        }
+    let pendingPremiumQuestion = null;
+    let premiumUnlocked = JSON.parse(localStorage.getItem('amzy-tutor-premium') || 'false');
 
-        function handlePinKeydown(input, e) {
-            if (e.key === 'Backspace' && !input.value && input.dataset.index > 0) {
-                const prev = document.querySelector(`.pin-inputs input[data-index="${parseInt(input.dataset.index) - 1}"]`);
-                if (prev) prev.focus();
-            }
-            if (e.key === 'Enter') verifyAdminPin();
-        }
-
-        function verifyAdminPin() {
-            const inputs = document.querySelectorAll('.pin-inputs input');
-            const entered = Array.from(inputs).map(i => i.value).join('');
-            if (entered === ADMIN_PIN) {
-                closeAdminModal();
-                window.location.href = 'admin.html';
-            } else {
-                document.getElementById('pin-error').classList.add('show');
-                inputs.forEach(i => {
-                    i.style.borderColor = 'var(--error)';
-                    setTimeout(() => { 
-                        i.style.borderColor = ''; 
-                        i.value = ''; 
-                    }, 400);
-                });
-                setTimeout(() => { inputs[0].focus(); }, 450);
-            }
-        }
-
-        document.getElementById('admin-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'admin-modal') closeAdminModal();
-        });
-
-        // ============================================================
-        // AMZY AI TUTOR CHATBOT
-        // ============================================================
-
-        let pendingPremiumQuestion = null;
-        let premiumUnlocked = JSON.parse(localStorage.getItem('amzy-tutor-premium') || 'false');
-
-        const knowledgeBase = {
-            'deploy': {
-                keywords: ['deploy', 'how do i deploy', 'how to deploy', 'create bot', 'new bot'],
-                response: `<strong>Deploying a Bot on Amzy Host</strong><br><br>
+    const knowledgeBase = {
+        'deploy': {
+            keywords: ['deploy', 'how do i deploy', 'how to deploy', 'create bot', 'new bot'],
+            response: `<strong>Deploying a Bot on Amzy Host</strong><br><br>
                 1. Go to the <strong>Deploy</strong> page from the navbar.<br>
-                2. Choose your bot language (Node.js, Python, etc.).<<br>
+                2. Choose your bot language (Node.js, Python, etc.).<br>
                 3. Upload your bot files or connect a GitHub repo.<br>
-                4. Set environment variables (like bot tokens).<<br>
+                4. Set environment variables (like bot tokens).<br>
                 5. Click <strong>Deploy</strong> and wait for the build.<br><br>
                 Your bot will appear in the dashboard once it's live!`,
-                premium: false
-            },
-            'coins': {
-                keywords: ['coin', 'coins', 'balance', 'how does the coin system', 'currency'],
-                response: `<strong>Amzy Coin System</strong><br><br>
+            premium: false
+        },
+        'coins': {
+            keywords: ['coin', 'coins', 'balance', 'how does the coin system', 'currency'],
+            response: `<strong>Amzy Coin System</strong><br><br>
                 &bull; <strong>Daily Reward:</strong> Claim 1 free coin every 24 hours.<br>
                 &bull; <strong>Store:</strong> Buy more coins or use them for premium features.<br>
                 &bull; <strong>Premium Tutor:</strong> Unlock advanced bot/website guides for 100 coins.<br>
                 &bull; Coins are stored locally and synced with your account.`,
-                premium: false
-            },
-            'pterodactyl': {
-                keywords: ['pterodactyl', 'panel', 'game panel', 'server panel'],
-                response: `<strong>What is Pterodactyl?</strong><br><br>
+            premium: false
+        },
+        'pterodactyl': {
+            keywords: ['pterodactyl', 'panel', 'game panel', 'server panel'],
+            response: `<strong>What is Pterodactyl?</strong><br><br>
                 Pterodactyl is the game server management panel that powers Amzy Host behind the scenes.<br><br>
                 &bull; It manages Docker containers for each bot.<br>
-                &bull; Handles resource allocation (CPU, RAM, Disk).<<br>
+                &bull; Handles resource allocation (CPU, RAM, Disk).<br>
                 &bull; Provides the SFTP file manager.<br>
                 &bull; Auto-restarts crashed bots.<br><br>
                 You interact with it through our simplified Amzy dashboard!`,
-                premium: false
-            },
-            'help': {
-                keywords: ['help', 'what can you do', 'what do you do', 'capabilities'],
-                response: `<strong>I can help you with:</strong><br><br>
+            premium: false
+        },
+        'help': {
+            keywords: ['help', 'what can you do', 'what do you do', 'capabilities'],
+            response: `<strong>I can help you with:</strong><br><br>
                 &bull; <strong>Free topics:</strong> Using Amzy Host, deploying bots, coin system, Pterodactyl basics, general questions.<br>
                 &bull; <strong>Premium topics (100 coins):</strong> Creating Telegram bots from scratch, building and hosting websites, advanced coding guides.<br><br>
                 Just ask me anything!`,
-                premium: false
-            },
-            'general': {
-                keywords: ['hello', 'hi', 'hey', 'how are you'],
-                response: `Hey there! I am Amzy Tutor, your personal guide to Amzy Host. Ask me about deploying bots, using the platform, or unlock premium topics for advanced guides!`,
-                premium: false
-            },
-            'build_bot': {
-                keywords: ['create telegram bot', 'build a bot', 'telegram bot', 'bot from scratch', 'how do i create a bot'],
-                response: `<strong>Creating a Telegram Bot from Scratch</strong><br><br>
+            premium: false
+        },
+        'general': {
+            keywords: ['hello', 'hi', 'hey', 'how are you'],
+            response: `Hey there! I am Amzy Tutor, your personal guide to Amzy Host. Ask me about deploying bots, using the platform, or unlock premium topics for advanced guides!`,
+            premium: false
+        },
+        'build_bot': {
+            keywords: ['create telegram bot', 'build a bot', 'telegram bot', 'bot from scratch', 'how do i create a bot'],
+            response: `<strong>Creating a Telegram Bot from Scratch</strong><br><br>
                 <strong>Step 1: Get a Bot Token</strong><br>
                 Message <code>@BotFather</code> on Telegram and send <code>/newbot</code>. Follow the prompts and save your token.<br><br>
                 <strong>Step 2: Basic Node.js Bot</strong><br>
@@ -2014,7 +1996,7 @@
 const token = 'YOUR_BOT_TOKEN';
 const bot = new TelegramBot(token, { polling: true });
 
-bot.onText(/\\/start/, (msg) => {
+bot.onText(/\/start/, (msg) => {
   bot.sendMessage(msg.chat.id, 'Hello! I am your bot.');
 });
 
@@ -2030,11 +2012,11 @@ bot.on('message', (msg) => {
                 &bull; Use webhooks instead of polling for better performance.<br>
                 &bull; Store config in <code>.env</code> files.<br>
                 &bull; Handle errors with <code>bot.on('polling_error', ...)</code>.`,
-                premium: true
-            },
-            'build_website': {
-                keywords: ['create website', 'build a website', 'host website', 'static site', 'how do i create a website'],
-                response: `<strong>Creating & Hosting a Website</strong><br><br>
+            premium: true
+        },
+        'build_website': {
+            keywords: ['create website', 'build a website', 'host website', 'static site', 'how do i create a website'],
+            response: `<strong>Creating & Hosting a Website</strong><br><br>
                 <strong>Step 1: Build Your Site</strong><br>
                 Create an <code>index.html</code> file:<br>
                 <pre><code>&lt;!DOCTYPE html&gt;
@@ -2051,190 +2033,190 @@ bot.on('message', (msg) => {
 &lt;/html&gt;</code></pre><br>
                 <strong>Step 2: Deploy to Amzy</strong><br>
                 1. Zip your HTML/CSS/JS files.<br>
-                2. Go to Deploy and select <strong>Static Website</strong>.<<br>
+                2. Go to Deploy and select <strong>Static Website</strong>.<br>
                 3. Upload your zip or connect GitHub.<br>
-                4. Set the root directory (usually <code>/</code>).<<br>
+                4. Set the root directory (usually <code>/</code>).<br>
                 5. Deploy!<br><br>
                 <strong>Advanced Tips:</strong><br>
                 &bull; Use a custom domain in Settings.<br>
                 &bull; Enable HTTPS automatically.<br>
                 &bull; Add a <code>404.html</code> for custom error pages.`,
-                premium: true
-            }
-        };
-
-        function toggleChatbot() {
-            document.body.classList.toggle('chatbot-open');
-            if (document.body.classList.contains('chatbot-open')) {
-                setTimeout(() => document.getElementById('chat-input').focus(), 300);
-            }
+            premium: true
         }
+    };
 
-        function clearChat() {
-            const chatBody = document.getElementById('chat-body');
-            chatBody.innerHTML = `
-                <div class="chat-message bot">
-                    <div class="message-avatar"><i class="fas fa-graduation-cap"></i></div>
-                    <div class="message-bubble">
-                        <strong>Chat cleared!</strong> How can I help you today?
-                        <div class="quick-actions">
-                            <button class="quick-action-btn" onclick="askQuick('How do I deploy a bot?')">Deploy a bot</button>
-                            <button class="quick-action-btn" onclick="askQuick('How does the coin system work?')">Coin system</button>
-                            <button class="quick-action-btn" onclick="askQuick('What is Pterodactyl?')">Pterodactyl</button>
-                            <button class="quick-action-btn premium" onclick="askPremium('How do I create a Telegram bot from scratch?')">Build a Bot</button>
-                            <button class="quick-action-btn premium" onclick="askPremium('How do I create a website and host it?')">Build a Website</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            scrollToBottom();
+    function toggleChatbot() {
+        document.body.classList.toggle('chatbot-open');
+        if (document.body.classList.contains('chatbot-open')) {
+            setTimeout(() => document.getElementById('chat-input').focus(), 300);
         }
+    }
 
-        function addMessage(text, sender) {
-            const chatBody = document.getElementById('chat-body');
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `chat-message ${sender}`;
-            const avatarIcon = sender === 'bot' ? 'fa-graduation-cap' : 'fa-user';
-            msgDiv.innerHTML = `
-                <div class="message-avatar"><i class="fas ${avatarIcon}"></i></div>
-                <div class="message-bubble">${text}</div>
-            `;
-            chatBody.appendChild(msgDiv);
-            scrollToBottom();
-        }
-
-        function addThinking() {
-            const chatBody = document.getElementById('chat-body');
-            const thinkingDiv = document.createElement('div');
-            thinkingDiv.className = 'chat-message bot';
-            thinkingDiv.id = 'thinking-msg';
-            thinkingDiv.innerHTML = `
+    function clearChat() {
+        const chatBody = document.getElementById('chat-body');
+        chatBody.innerHTML = `
+            <div class="chat-message bot">
                 <div class="message-avatar"><i class="fas fa-graduation-cap"></i></div>
                 <div class="message-bubble">
-                    <div class="thinking-indicator">
-                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    <strong>Chat cleared!</strong> How can I help you today?
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" onclick="askQuick('How do I deploy a bot?')">Deploy a bot</button>
+                        <button class="quick-action-btn" onclick="askQuick('How does the coin system work?')">Coin system</button>
+                        <button class="quick-action-btn" onclick="askQuick('What is Pterodactyl?')">Pterodactyl</button>
+                        <button class="quick-action-btn premium" onclick="askPremium('How do I create a Telegram bot from scratch?')">Build a Bot</button>
+                        <button class="quick-action-btn premium" onclick="askPremium('How do I create a website and host it?')">Build a Website</button>
                     </div>
                 </div>
-            `;
-            chatBody.appendChild(thinkingDiv);
-            scrollToBottom();
-        }
+            </div>
+        `;
+        scrollToBottom();
+    }
 
-        function removeThinking() {
-            const thinking = document.getElementById('thinking-msg');
-            if (thinking) thinking.remove();
-        }
+    function addMessage(text, sender) {
+        const chatBody = document.getElementById('chat-body');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-message ${sender}`;
+        const avatarIcon = sender === 'bot' ? 'fa-graduation-cap' : 'fa-user';
+        msgDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas ${avatarIcon}"></i></div>
+            <div class="message-bubble">${text}</div>
+        `;
+        chatBody.appendChild(msgDiv);
+        scrollToBottom();
+    }
 
-        function scrollToBottom() {
-            const chatBody = document.getElementById('chat-body');
-            chatBody.scrollTop = chatBody.scrollHeight;
-        }
+    function addThinking() {
+        const chatBody = document.getElementById('chat-body');
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.className = 'chat-message bot';
+        thinkingDiv.id = 'thinking-msg';
+        thinkingDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-graduation-cap"></i></div>
+            <div class="message-bubble">
+                <div class="thinking-indicator">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+            </div>
+        `;
+        chatBody.appendChild(thinkingDiv);
+        scrollToBottom();
+    }
 
-        function findResponse(input) {
-            const lower = input.toLowerCase();
-            for (const key in knowledgeBase) {
-                const topic = knowledgeBase[key];
-                if (topic.keywords.some(kw => lower.includes(kw))) {
-                    return topic;
-                }
+    function removeThinking() {
+        const thinking = document.getElementById('thinking-msg');
+        if (thinking) thinking.remove();
+    }
+
+    function scrollToBottom() {
+        const chatBody = document.getElementById('chat-body');
+        chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    function findResponse(input) {
+        const lower = input.toLowerCase();
+        for (const key in knowledgeBase) {
+            const topic = knowledgeBase[key];
+            if (topic.keywords.some(kw => lower.includes(kw))) {
+                return topic;
             }
-            return null;
         }
+        return null;
+    }
 
-        function askQuick(question) {
+    function askQuick(question) {
+        sendMessage(question, false);
+    }
+
+    function askPremium(question) {
+        if (premiumUnlocked) {
             sendMessage(question, false);
+        } else {
+            pendingPremiumQuestion = question;
+            document.getElementById('coin-gate-overlay').classList.add('show');
         }
+    }
 
-        function askPremium(question) {
-            if (premiumUnlocked) {
-                sendMessage(question, false);
-            } else {
-                pendingPremiumQuestion = question;
-                document.getElementById('coin-gate-overlay').classList.add('show');
+    function closeCoinGate() {
+        document.getElementById('coin-gate-overlay').classList.remove('show');
+        pendingPremiumQuestion = null;
+    }
+
+    function confirmUnlock() {
+        const coins = parseInt(localStorage.getItem('amzy-coins') || '0');
+        if (coins >= 100) {
+            localStorage.setItem('amzy-coins', coins - 100);
+            document.getElementById('coin-display').textContent = coins - 100;
+            document.getElementById('coin-balance').textContent = coins - 100;
+            premiumUnlocked = true;
+            localStorage.setItem('amzy-tutor-premium', 'true');
+            closeCoinGate();
+            if (pendingPremiumQuestion) {
+                sendMessage(pendingPremiumQuestion, false);
+                pendingPremiumQuestion = null;
             }
+            addMessage(`<strong>Premium unlocked!</strong> You now have access to all advanced bot and website building guides. Happy learning!`, 'bot');
+        } else {
+            closeCoinGate();
+            addMessage(`<strong>Not enough coins!</strong> You need 100 coins to unlock premium tutoring. Claim your daily reward or visit the Store to get more coins.`, 'bot');
         }
+    }
 
-        function closeCoinGate() {
-            document.getElementById('coin-gate-overlay').classList.remove('show');
-            pendingPremiumQuestion = null;
-        }
+    function sendMessage(text, isUserInput = true) {
+        if (!text.trim()) return;
+        addMessage(text, 'user');
 
-        function confirmUnlock() {
-            const coins = parseInt(localStorage.getItem('amzy-coins') || '0');
-            if (coins >= 100) {
-                localStorage.setItem('amzy-coins', coins - 100);
-                document.getElementById('coin-display').textContent = coins - 100;
-                document.getElementById('coin-balance').textContent = coins - 100;
-                premiumUnlocked = true;
-                localStorage.setItem('amzy-tutor-premium', 'true');
-                closeCoinGate();
-                if (pendingPremiumQuestion) {
-                    sendMessage(pendingPremiumQuestion, false);
-                    pendingPremiumQuestion = null;
-                }
-                addMessage(`<<strong>Premium unlocked!</strong> You now have access to all advanced bot and website building guides. Happy learning!`, 'bot');
-            } else {
-                closeCoinGate();
-                addMessage(`<<strong>Not enough coins!</strong> You need 100 coins to unlock premium tutoring. Claim your daily reward or visit the Store to get more coins.`, 'bot');
-            }
-        }
+        const sendBtn = document.getElementById('chat-send');
+        sendBtn.disabled = true;
+        addThinking();
 
-        function sendMessage(text, isUserInput = true) {
-            if (!text.trim()) return;
-            addMessage(text, 'user');
-
-            const sendBtn = document.getElementById('chat-send');
-            sendBtn.disabled = true;
-            addThinking();
-
-            setTimeout(() => {
-                removeThinking();
-                const topic = findResponse(text);
-                if (topic) {
-                    if (topic.premium && !premiumUnlocked) {
-                        addMessage(`<<strong>This is a premium topic!</strong><br><br>Creating bots and websites from scratch requires unlocking premium tutoring for <strong>100 coins</strong>.<<br><br>Click the button below to unlock:<br><button class="quick-action-btn premium" onclick="askPremium('${text.replace(/'/g, "\\'")}')" style="margin-top:8px;">Unlock for 100 Coins</button>`, 'bot');
-                    } else {
-                        addMessage(topic.response, 'bot');
-                    }
+        setTimeout(() => {
+            removeThinking();
+            const topic = findResponse(text);
+            if (topic) {
+                if (topic.premium && !premiumUnlocked) {
+                    addMessage(`<strong>This is a premium topic!</strong><br><br>Creating bots and websites from scratch requires unlocking premium tutoring for <strong>100 coins</strong>.<br><br>Click the button below to unlock:<br><button class="quick-action-btn premium" onclick="askPremium('${text.replace(/'/g, "\'")}')" style="margin-top:8px;">Unlock for 100 Coins</button>`, 'bot');
                 } else {
-                    addMessage(`I am not sure I understand. Try asking about:<br><br>&bull; How to deploy a bot<br>&bull; How coins work<br>&bull; What Pterodactyl is<br>&bull; Or unlock premium for bot/website building guides!`, 'bot');
+                    addMessage(topic.response, 'bot');
                 }
-                sendBtn.disabled = false;
-                document.getElementById('chat-input').value = '';
-                document.getElementById('chat-input').style.height = 'auto';
-            }, 600 + Math.random() * 400);
-        }
-
-        function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            sendMessage(input.value, true);
-        }
-
-        function handleChatKey(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendChatMessage();
+            } else {
+                addMessage(`I am not sure I understand. Try asking about:<br><br>&bull; How to deploy a bot<br>&bull; How coins work<br>&bull; What Pterodactyl is<br>&bull; Or unlock premium for bot/website building guides!`, 'bot');
             }
+            sendBtn.disabled = false;
+            document.getElementById('chat-input').value = '';
+            document.getElementById('chat-input').style.height = 'auto';
+        }, 600 + Math.random() * 400);
+    }
+
+    function sendChatMessage() {
+        const input = document.getElementById('chat-input');
+        sendMessage(input.value, true);
+    }
+
+    function handleChatKey(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendChatMessage();
         }
+    }
 
-        // Auto-resize textarea
-        document.getElementById('chat-input').addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
-        });
+    // Auto-resize textarea
+    document.getElementById('chat-input').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
 
-        // Close chatbot when clicking outside
-        document.addEventListener('click', (e) => {
-            const popup = document.getElementById('chatbot-popup');
-            const toggler = document.getElementById('chatbot-toggler');
-            const coinGate = document.getElementById('coin-gate-overlay');
-            if (document.body.classList.contains('chatbot-open') &&
-                !popup.contains(e.target) &&
-                !toggler.contains(e.target) &&
-                !coinGate.contains(e.target)) {
-                toggleChatbot();
-            }
-        });
-    </script>
+    // Close chatbot when clicking outside
+    document.addEventListener('click', (e) => {
+        const popup = document.getElementById('chatbot-popup');
+        const toggler = document.getElementById('chatbot-toggler');
+        const coinGate = document.getElementById('coin-gate-overlay');
+        if (document.body.classList.contains('chatbot-open') &&
+            !popup.contains(e.target) &&
+            !toggler.contains(e.target) &&
+            !coinGate.contains(e.target)) {
+            toggleChatbot();
+        }
+    });
+</script>
 </body>
 </html>
